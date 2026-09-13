@@ -1,0 +1,6 @@
+{
+  "name": "MahaSigma",
+  "description": "Asisten akademik mahasiswa offline-first: jadwal kuliah fleksibel, impor jadwal PDF, manajemen tugas, catatan materi foto papan tulis, dan backup data.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
