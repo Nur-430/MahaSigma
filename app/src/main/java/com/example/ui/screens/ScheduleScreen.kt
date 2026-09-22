@@ -212,14 +212,14 @@ fun ScheduleScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Day of Week selector pills (Senin - Minggu)
+                    // Day of Week selector pills (Senin - Jumat)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        for (day in 1..7) {
+                        for (day in 1..5) {
                             val isSelected = (day == selectedDay)
                             val isToday = (day == currentDayOfWeek)
                             val dayName = DateUtils.getDayName(day)
@@ -384,15 +384,25 @@ fun ScheduleScreen(
 
     // Dialog Override Jadwal (Dinamis: Batal / Ganti Jam / Ganti Ruangan / Online)
     if (showOverrideDialog && scheduleForOverride != null) {
+        val targetSchedule = scheduleForOverride!!
         val activeOverride = schedulesForDay
-            .firstOrNull { it.schedule.id == scheduleForOverride?.id }
+            .firstOrNull { it.schedule.id == targetSchedule.id }
             ?.overrides?.firstOrNull()
 
         ScheduleOverrideDialog(
-            schedule = scheduleForOverride!!,
+            schedule = targetSchedule,
             existingOverride = activeOverride,
             onDismiss = { showOverrideDialog = false },
-            onSave = { override ->
+            onSave = { override, newDay ->
+                if (newDay != null && newDay != targetSchedule.dayOfWeek) {
+                    viewModel.saveSchedule(
+                        targetSchedule.copy(
+                            dayOfWeek = newDay,
+                            startTime = override.newStartTime ?: targetSchedule.startTime,
+                            endTime = override.newEndTime ?: targetSchedule.endTime
+                        )
+                    )
+                }
                 viewModel.saveScheduleOverride(override)
                 showOverrideDialog = false
             }
@@ -788,7 +798,7 @@ fun AddEditScheduleDialog(
                         onDismissRequest = { dayDropdownExpanded = false },
                         modifier = Modifier.background(SurfaceDarkVariant)
                     ) {
-                        for (d in 1..7) {
+                        for (d in 1..5) {
                             DropdownMenuItem(
                                 text = { Text(DateUtils.getDayName(d), color = AlabasterGrey) },
                                 onClick = {
@@ -885,11 +895,12 @@ fun ScheduleOverrideDialog(
     schedule: ScheduleEntity,
     existingOverride: ScheduleOverrideEntity?,
     onDismiss: () -> Unit,
-    onSave: (ScheduleOverrideEntity) -> Unit
+    onSave: (ScheduleOverrideEntity, Int?) -> Unit
 ) {
     var status by remember {
         mutableStateOf(existingOverride?.status ?: "CANCELED")
     }
+    var newDayOfWeek by remember { mutableStateOf(schedule.dayOfWeek.coerceIn(1, 5)) }
     var newStartTime by remember { mutableStateOf(existingOverride?.newStartTime ?: schedule.startTime) }
     var newEndTime by remember { mutableStateOf(existingOverride?.newEndTime ?: schedule.endTime) }
     var newRoom by remember { mutableStateOf(existingOverride?.newRoom ?: schedule.room) }
@@ -903,6 +914,7 @@ fun ScheduleOverrideDialog(
     )
 
     var statusDropdownExpanded by remember { mutableStateOf(false) }
+    var overrideDayDropdownExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -967,6 +979,51 @@ fun ScheduleOverrideDialog(
 
                 // Fields based on status
                 if (status == "CHANGED_TIME") {
+                    // Opsi Ganti Hari Kuliah
+                    ExposedDropdownMenuBox(
+                        expanded = overrideDayDropdownExpanded,
+                        onExpandedChange = { overrideDayDropdownExpanded = it }
+                    ) {
+                        val isDayChanged = (newDayOfWeek != schedule.dayOfWeek)
+                        OutlinedTextField(
+                            value = "Hari: ${DateUtils.getDayName(newDayOfWeek)}" + if (isDayChanged) " (Dipindahkan)" else " (Tetap)",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Pilihan Hari Kuliah") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = overrideDayDropdownExpanded) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = if (isDayChanged) SunsetAmber else AlabasterGrey,
+                                unfocusedTextColor = if (isDayChanged) SunsetAmber else AlabasterGrey,
+                                focusedBorderColor = ElectricCyan,
+                                unfocusedBorderColor = DuskBlue
+                            )
+                        )
+                        ExposedDropdownMenu(
+                            expanded = overrideDayDropdownExpanded,
+                            onDismissRequest = { overrideDayDropdownExpanded = false },
+                            modifier = Modifier.background(SurfaceDarkVariant)
+                        ) {
+                            for (d in 1..5) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = DateUtils.getDayName(d) + if (d == schedule.dayOfWeek) " (Hari Asal)" else "",
+                                            color = if (d == newDayOfWeek) ElectricCyan else AlabasterGrey,
+                                            fontWeight = if (d == newDayOfWeek) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    },
+                                    onClick = {
+                                        newDayOfWeek = d
+                                        overrideDayDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1042,7 +1099,8 @@ fun ScheduleOverrideDialog(
                             newEndTime = if (status == "CHANGED_TIME") newEndTime.trim() else null,
                             newRoom = if (status == "CHANGED_ROOM") newRoom.trim() else null,
                             note = note.trim().ifEmpty { null }
-                        )
+                        ),
+                        if (status == "CHANGED_TIME") newDayOfWeek else null
                     )
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = SunsetAmber)

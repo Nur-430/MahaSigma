@@ -67,11 +67,11 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
     val allOverrides: StateFlow<List<ScheduleOverrideEntity>> = repository.allOverrides
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _selectedDayOfWeek = MutableStateFlow(DateUtils.getCurrentDayOfWeek())
+    private val _selectedDayOfWeek = MutableStateFlow(DateUtils.getCurrentDayOfWeek().coerceIn(1, 5))
     val selectedDayOfWeek: StateFlow<Int> = _selectedDayOfWeek.asStateFlow()
 
     fun setSelectedDayOfWeek(day: Int) {
-        _selectedDayOfWeek.value = day
+        _selectedDayOfWeek.value = day.coerceIn(1, 5)
     }
 
     // Schedules filtered by selected day
@@ -380,6 +380,12 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
                 }
 
                 val courseId = if (course != null) {
+                    val updatedCourse = course.copy(
+                        name = item.courseName.trim(),
+                        code = item.courseCode.trim().ifBlank { course.code },
+                        lecturer = item.lecturer.trim().ifBlank { course.lecturer }
+                    )
+                    repository.updateCourse(updatedCourse)
                     course.id
                 } else {
                     val newCourse = CourseEntity(
