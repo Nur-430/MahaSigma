@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,7 +27,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -37,12 +37,9 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.TableChart
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -50,10 +47,10 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -74,6 +71,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -84,16 +82,11 @@ import com.example.data.entity.ScheduleOverrideEntity
 import com.example.data.entity.ScheduleWithDetails
 import com.example.ui.components.BackgroundPdfImportDialog
 import com.example.ui.components.StatusOverrideBadge
-import com.example.ui.theme.AlabasterGrey
 import com.example.ui.theme.CrimsonRed
-import com.example.ui.theme.DuskBlue
-import com.example.ui.theme.DustyDenim
-import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.InkBlack
+import com.example.ui.theme.MahaTheme
 import com.example.ui.theme.NeonEmerald
-import com.example.ui.theme.PrussianBlue
 import com.example.ui.theme.SunsetAmber
-import com.example.ui.theme.SurfaceDarkVariant
 import com.example.ui.viewmodel.MahaSigmaViewModel
 import com.example.util.DateUtils
 
@@ -103,6 +96,7 @@ fun ScheduleScreen(
     viewModel: MahaSigmaViewModel,
     modifier: Modifier = Modifier
 ) {
+    val colors = MahaTheme.colors
     val selectedDay by viewModel.selectedDayOfWeek.collectAsStateWithLifecycle()
     val schedulesForDay by viewModel.schedulesForSelectedDay.collectAsStateWithLifecycle()
     val courses by viewModel.courses.collectAsStateWithLifecycle()
@@ -127,15 +121,15 @@ fun ScheduleScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = InkBlack,
+        containerColor = colors.background,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
                     scheduleToEdit = null
                     showAddEditDialog = true
                 },
-                containerColor = DuskBlue,
-                contentColor = AlabasterGrey,
+                containerColor = colors.accentPrimary,
+                contentColor = if (colors.isDark) InkBlack else Color.White,
                 modifier = Modifier
                     .padding(bottom = 80.dp)
                     .testTag("add_schedule_fab")
@@ -153,8 +147,8 @@ fun ScheduleScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(PrussianBlue)
-                    .border(1.dp, DuskBlue.copy(alpha = 0.4f), RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
+                    .background(colors.surface)
+                    .border(1.dp, colors.borderSubtle, RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
                     .padding(16.dp)
             ) {
                 Column {
@@ -166,13 +160,13 @@ fun ScheduleScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "Jadwal Mingguan",
-                                color = AlabasterGrey,
+                                color = colors.textPrimary,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
                                 text = "Kelola jam kuliah dan override jadwal dinamis",
-                                color = DustyDenim,
+                                color = colors.textSecondary,
                                 fontSize = 12.sp
                             )
                         }
@@ -192,10 +186,10 @@ fun ScheduleScreen(
                             },
                             shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = SurfaceDarkVariant.copy(alpha = 0.6f),
+                                containerColor = colors.surfaceVariant,
                                 contentColor = NeonEmerald
                             ),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, NeonEmerald.copy(alpha = 0.5f)),
+                            border = BorderStroke(1.dp, NeonEmerald.copy(alpha = 0.5f)),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                             modifier = Modifier.testTag("import_pdf_schedule_button")
                         ) {
@@ -229,17 +223,17 @@ fun ScheduleScreen(
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(
                                         when {
-                                            isSelected -> DuskBlue
-                                            isToday -> SurfaceDarkVariant
-                                            else -> PrussianBlue
+                                            isSelected -> colors.accentPrimary
+                                            isToday -> colors.surfaceVariant
+                                            else -> colors.surface
                                         }
                                     )
                                     .border(
                                         1.dp,
                                         when {
-                                            isSelected -> ElectricCyan
+                                            isSelected -> colors.accentPrimary
                                             isToday -> SunsetAmber.copy(alpha = 0.8f)
-                                            else -> DuskBlue.copy(alpha = 0.3f)
+                                            else -> colors.borderSubtle
                                         },
                                         RoundedCornerShape(12.dp)
                                     )
@@ -259,7 +253,9 @@ fun ScheduleScreen(
                                     }
                                     Text(
                                         text = dayName,
-                                        color = if (isSelected) AlabasterGrey else DustyDenim,
+                                        color = if (isSelected) {
+                                            if (colors.isDark) InkBlack else Color.White
+                                        } else colors.textSecondary,
                                         fontSize = 13.sp,
                                         fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Medium
                                     )
@@ -282,22 +278,22 @@ fun ScheduleScreen(
                         Icon(
                             imageVector = Icons.Default.EventAvailable,
                             contentDescription = null,
-                            tint = DustyDenim,
+                            tint = colors.textSecondary,
                             modifier = Modifier.size(56.dp)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = "Tidak Ada Jadwal di Hari ${DateUtils.getDayName(selectedDay)}",
-                            color = AlabasterGrey,
+                            color = colors.textPrimary,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = "Tekan tombol '+' di bawah untuk menambahkan jadwal kuliah baru.",
-                            color = DustyDenim,
+                            color = colors.textSecondary,
                             fontSize = 13.sp,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -307,9 +303,10 @@ fun ScheduleScreen(
                                     showAddEditDialog = true
                                 },
                                 colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = SurfaceDarkVariant,
-                                    contentColor = ElectricCyan
-                                )
+                                    containerColor = colors.surfaceVariant,
+                                    contentColor = colors.accentPrimary
+                                ),
+                                shape = RoundedCornerShape(10.dp)
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
@@ -329,7 +326,11 @@ fun ScheduleScreen(
                                         )
                                     )
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = DuskBlue)
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colors.accentPrimary,
+                                    contentColor = if (colors.isDark) InkBlack else Color.White
+                                ),
+                                shape = RoundedCornerShape(10.dp)
                             ) {
                                 Icon(Icons.Default.PictureAsPdf, contentDescription = null, modifier = Modifier.size(18.dp), tint = CrimsonRed)
                                 Spacer(modifier = Modifier.width(6.dp))
@@ -416,9 +417,9 @@ fun ScheduleScreen(
     if (scheduleToDelete != null) {
         AlertDialog(
             onDismissRequest = { scheduleToDelete = null },
-            containerColor = PrussianBlue,
-            title = { Text("Hapus Jadwal Kuliah?", color = AlabasterGrey) },
-            text = { Text("Jadwal ini akan dihapus permanen dari daftar mingguan.", color = DustyDenim) },
+            containerColor = colors.surface,
+            title = { Text("Hapus Jadwal Kuliah?", color = colors.textPrimary) },
+            text = { Text("Jadwal ini akan dihapus permanen dari daftar mingguan.", color = colors.textSecondary) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -432,7 +433,7 @@ fun ScheduleScreen(
             },
             dismissButton = {
                 TextButton(onClick = { scheduleToDelete = null }) {
-                    Text("Batal", color = DustyDenim)
+                    Text("Batal", color = colors.textSecondary)
                 }
             }
         )
@@ -448,6 +449,7 @@ fun ScheduleDetailCard(
     onRemoveOverride: (ScheduleOverrideEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = MahaTheme.colors
     val schedule = scheduleWithDetails.schedule
     val course = scheduleWithDetails.course
     val override = scheduleWithDetails.overrides.firstOrNull()
@@ -456,18 +458,24 @@ fun ScheduleDetailCard(
 
     val courseColor = try {
         if (!course?.colorHex.isNullOrBlank()) Color(android.graphics.Color.parseColor(course.colorHex))
-        else ElectricCyan
-    } catch (e: Exception) {
-        ElectricCyan
+        else colors.accentPrimary
+    } catch (_: Exception) {
+        colors.accentPrimary
     }
+
+    val isPraktik = course?.code.equals("Praktik", ignoreCase = true) ||
+                    (course?.name?.contains("Praktik", ignoreCase = true) == true)
+    val jenisKuliah = if (isPraktik) "Praktik" else "Teori"
+    val badgeColor = if (isPraktik) SunsetAmber else colors.accentPrimary
+    val badgeBg = if (isPraktik) SunsetAmber.copy(alpha = 0.15f) else colors.accentPrimary.copy(alpha = 0.15f)
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = PrussianBlue),
+        colors = CardDefaults.cardColors(containerColor = colors.surface),
         shape = RoundedCornerShape(16.dp),
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             1.dp,
-            if (override != null) SunsetAmber.copy(alpha = 0.6f) else DuskBlue.copy(alpha = 0.5f)
+            if (override != null) SunsetAmber.copy(alpha = 0.6f) else colors.borderSubtle
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -486,21 +494,39 @@ fun ScheduleDetailCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = course?.name ?: "Mata Kuliah Tidak Dikenal",
-                        color = AlabasterGrey,
+                        color = colors.textPrimary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    val isPraktik = course?.code.equals("Praktik", ignoreCase = true) ||
-                                    (course?.name?.contains("Praktik", ignoreCase = true) == true)
-                    val jenisKuliah = if (isPraktik) "Praktik" else "Teori"
-                    Text(
-                        text = "Jenis: $jenisKuliah",
-                        color = DustyDenim,
-                        fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace
-                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(badgeBg)
+                                .border(1.dp, badgeColor.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 6.dp, vertical = 1.dp)
+                        ) {
+                            Text(
+                                text = jenisKuliah,
+                                color = badgeColor,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                        if (!course?.code.isNullOrBlank() && !course?.code.equals("Praktik", ignoreCase = true)) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = course.code,
+                                color = colors.textSecondary,
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+                    }
                 }
 
                 Box {
@@ -508,24 +534,24 @@ fun ScheduleDetailCard(
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "Menu",
-                            tint = DustyDenim
+                            tint = colors.textSecondary
                         )
                     }
                     DropdownMenu(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false },
-                        modifier = Modifier.background(SurfaceDarkVariant)
+                        modifier = Modifier.background(colors.surface)
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Ubah Jadwal", color = AlabasterGrey) },
+                            text = { Text("Ubah Jadwal", color = colors.textPrimary) },
                             onClick = {
                                 showMenu = false
                                 onEditClick()
                             },
-                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = ElectricCyan) }
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = colors.accentPrimary) }
                         )
                         DropdownMenuItem(
-                            text = { Text("Override Status Kuliah", color = AlabasterGrey) },
+                            text = { Text("Override Status Kuliah", color = colors.textPrimary) },
                             onClick = {
                                 showMenu = false
                                 onOverrideClick()
@@ -555,13 +581,13 @@ fun ScheduleDetailCard(
                     Icon(
                         imageVector = Icons.Default.Schedule,
                         contentDescription = null,
-                        tint = ElectricCyan,
+                        tint = colors.accentPrimary,
                         modifier = Modifier.size(15.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "${schedule.startTime} - ${schedule.endTime}",
-                        color = AlabasterGrey,
+                        color = colors.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -577,7 +603,7 @@ fun ScheduleDetailCard(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = schedule.room,
-                        color = AlabasterGrey,
+                        color = colors.textPrimary,
                         fontSize = 13.sp
                     )
                 }
@@ -589,13 +615,13 @@ fun ScheduleDetailCard(
                     Icon(
                         imageVector = Icons.Default.Person,
                         contentDescription = null,
-                        tint = DustyDenim,
+                        tint = colors.textSecondary,
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = course.lecturer,
-                        color = DustyDenim,
+                        color = colors.textSecondary,
                         fontSize = 12.sp
                     )
                 }
@@ -608,7 +634,7 @@ fun ScheduleDetailCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(SurfaceDarkVariant)
+                        .background(colors.surfaceVariant)
                         .border(1.dp, SunsetAmber.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
                         .padding(10.dp)
                 ) {
@@ -623,7 +649,7 @@ fun ScheduleDetailCard(
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = "Catatan: ${override.note}",
-                                    color = AlabasterGrey,
+                                    color = colors.textPrimary,
                                     fontSize = 12.sp
                                 )
                             }
@@ -631,7 +657,7 @@ fun ScheduleDetailCard(
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = "Jam baru: ${override.newStartTime} - ${override.newEndTime}",
-                                    color = ElectricCyan,
+                                    color = colors.accentPrimary,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -640,7 +666,7 @@ fun ScheduleDetailCard(
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = "Ruangan baru: ${override.newRoom}",
-                                    color = ElectricCyan,
+                                    color = colors.accentPrimary,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -654,7 +680,7 @@ fun ScheduleDetailCard(
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Batalkan Override",
-                                tint = DustyDenim,
+                                tint = colors.textSecondary,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -666,7 +692,7 @@ fun ScheduleDetailCard(
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(SurfaceDarkVariant)
+                        .background(colors.surfaceVariant)
                         .clickable { onOverrideClick() }
                         .padding(horizontal = 10.dp, vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -680,7 +706,7 @@ fun ScheduleDetailCard(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Set Status Hari Ini (Libur / Pindah Jam / Online)",
-                        color = DustyDenim,
+                        color = colors.textSecondary,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -699,6 +725,7 @@ fun AddEditScheduleDialog(
     onDismiss: () -> Unit,
     onSave: (ScheduleEntity) -> Unit
 ) {
+    val colors = MahaTheme.colors
     var selectedCourseId by remember {
         mutableStateOf(schedule?.courseId ?: courses.firstOrNull()?.id ?: 0)
     }
@@ -712,11 +739,11 @@ fun AddEditScheduleDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = PrussianBlue,
+        containerColor = colors.surface,
         title = {
             Text(
                 text = if (schedule == null) "Tambah Jadwal Kuliah" else "Ubah Jadwal Kuliah",
-                color = AlabasterGrey,
+                color = colors.textPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -749,20 +776,20 @@ fun AddEditScheduleDialog(
                                 .fillMaxWidth()
                                 .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = AlabasterGrey,
-                                unfocusedTextColor = AlabasterGrey,
-                                focusedBorderColor = ElectricCyan,
-                                unfocusedBorderColor = DuskBlue
+                                focusedTextColor = colors.textPrimary,
+                                unfocusedTextColor = colors.textPrimary,
+                                focusedBorderColor = colors.accentPrimary,
+                                unfocusedBorderColor = colors.borderSubtle
                             )
                         )
                         ExposedDropdownMenu(
                             expanded = courseDropdownExpanded,
                             onDismissRequest = { courseDropdownExpanded = false },
-                            modifier = Modifier.background(SurfaceDarkVariant)
+                            modifier = Modifier.background(colors.surface)
                         ) {
                             courses.forEach { course ->
                                 DropdownMenuItem(
-                                    text = { Text("${course.code} - ${course.name}", color = AlabasterGrey) },
+                                    text = { Text("${course.code} - ${course.name}", color = colors.textPrimary) },
                                     onClick = {
                                         selectedCourseId = course.id
                                         courseDropdownExpanded = false
@@ -788,20 +815,20 @@ fun AddEditScheduleDialog(
                             .fillMaxWidth()
                             .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = AlabasterGrey,
-                            unfocusedTextColor = AlabasterGrey,
-                            focusedBorderColor = ElectricCyan,
-                            unfocusedBorderColor = DuskBlue
+                            focusedTextColor = colors.textPrimary,
+                            unfocusedTextColor = colors.textPrimary,
+                            focusedBorderColor = colors.accentPrimary,
+                            unfocusedBorderColor = colors.borderSubtle
                         )
                     )
                     ExposedDropdownMenu(
                         expanded = dayDropdownExpanded,
                         onDismissRequest = { dayDropdownExpanded = false },
-                        modifier = Modifier.background(SurfaceDarkVariant)
+                        modifier = Modifier.background(colors.surface)
                     ) {
                         for (d in 1..5) {
                             DropdownMenuItem(
-                                text = { Text(DateUtils.getDayName(d), color = AlabasterGrey) },
+                                text = { Text(DateUtils.getDayName(d), color = colors.textPrimary) },
                                 onClick = {
                                     dayOfWeek = d
                                     dayDropdownExpanded = false
@@ -823,10 +850,10 @@ fun AddEditScheduleDialog(
                         placeholder = { Text("08:00") },
                         modifier = Modifier.weight(1f),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = AlabasterGrey,
-                            unfocusedTextColor = AlabasterGrey,
-                            focusedBorderColor = ElectricCyan,
-                            unfocusedBorderColor = DuskBlue
+                            focusedTextColor = colors.textPrimary,
+                            unfocusedTextColor = colors.textPrimary,
+                            focusedBorderColor = colors.accentPrimary,
+                            unfocusedBorderColor = colors.borderSubtle
                         )
                     )
                     OutlinedTextField(
@@ -836,10 +863,10 @@ fun AddEditScheduleDialog(
                         placeholder = { Text("10:30") },
                         modifier = Modifier.weight(1f),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = AlabasterGrey,
-                            unfocusedTextColor = AlabasterGrey,
-                            focusedBorderColor = ElectricCyan,
-                            unfocusedBorderColor = DuskBlue
+                            focusedTextColor = colors.textPrimary,
+                            unfocusedTextColor = colors.textPrimary,
+                            focusedBorderColor = colors.accentPrimary,
+                            unfocusedBorderColor = colors.borderSubtle
                         )
                     )
                 }
@@ -852,10 +879,10 @@ fun AddEditScheduleDialog(
                     placeholder = { Text("e.g. Lab Komputer 3 / Gedung B R.201") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = AlabasterGrey,
-                        unfocusedTextColor = AlabasterGrey,
-                        focusedBorderColor = ElectricCyan,
-                        unfocusedBorderColor = DuskBlue
+                        focusedTextColor = colors.textPrimary,
+                        unfocusedTextColor = colors.textPrimary,
+                        focusedBorderColor = colors.accentPrimary,
+                        unfocusedBorderColor = colors.borderSubtle
                     )
                 )
             }
@@ -876,15 +903,18 @@ fun AddEditScheduleDialog(
                         )
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = DuskBlue),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.accentPrimary,
+                    contentColor = if (colors.isDark) InkBlack else Color.White
+                ),
                 enabled = courses.isNotEmpty()
             ) {
-                Text("Simpan", color = AlabasterGrey)
+                Text("Simpan", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Batal", color = DustyDenim)
+                Text("Batal", color = colors.textSecondary)
             }
         }
     )
@@ -898,6 +928,7 @@ fun ScheduleOverrideDialog(
     onDismiss: () -> Unit,
     onSave: (ScheduleOverrideEntity, Int?) -> Unit
 ) {
+    val colors = MahaTheme.colors
     var status by remember {
         mutableStateOf(existingOverride?.status ?: "CANCELED")
     }
@@ -919,11 +950,11 @@ fun ScheduleOverrideDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = PrussianBlue,
+        containerColor = colors.surface,
         title = {
             Text(
                 text = "Override Status Kuliah",
-                color = AlabasterGrey,
+                color = colors.textPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -935,7 +966,7 @@ fun ScheduleOverrideDialog(
             ) {
                 Text(
                     text = "Gunakan fitur ini jika dosen membatalkan kelas, mengganti jam, atau pindah ruangan untuk hari ini.",
-                    color = DustyDenim,
+                    color = colors.textSecondary,
                     fontSize = 12.sp
                 )
 
@@ -955,20 +986,20 @@ fun ScheduleOverrideDialog(
                             .fillMaxWidth()
                             .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = AlabasterGrey,
-                            unfocusedTextColor = AlabasterGrey,
-                            focusedBorderColor = ElectricCyan,
-                            unfocusedBorderColor = DuskBlue
+                            focusedTextColor = colors.textPrimary,
+                            unfocusedTextColor = colors.textPrimary,
+                            focusedBorderColor = colors.accentPrimary,
+                            unfocusedBorderColor = colors.borderSubtle
                         )
                     )
                     ExposedDropdownMenu(
                         expanded = statusDropdownExpanded,
                         onDismissRequest = { statusDropdownExpanded = false },
-                        modifier = Modifier.background(SurfaceDarkVariant)
+                        modifier = Modifier.background(colors.surface)
                     ) {
                         statusOptions.forEach { (key, label) ->
                             DropdownMenuItem(
-                                text = { Text(label, color = AlabasterGrey) },
+                                text = { Text(label, color = colors.textPrimary) },
                                 onClick = {
                                     status = key
                                     statusDropdownExpanded = false
@@ -996,23 +1027,23 @@ fun ScheduleOverrideDialog(
                                 .fillMaxWidth()
                                 .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = if (isDayChanged) SunsetAmber else AlabasterGrey,
-                                unfocusedTextColor = if (isDayChanged) SunsetAmber else AlabasterGrey,
-                                focusedBorderColor = ElectricCyan,
-                                unfocusedBorderColor = DuskBlue
+                                focusedTextColor = if (isDayChanged) SunsetAmber else colors.textPrimary,
+                                unfocusedTextColor = if (isDayChanged) SunsetAmber else colors.textPrimary,
+                                focusedBorderColor = colors.accentPrimary,
+                                unfocusedBorderColor = colors.borderSubtle
                             )
                         )
                         ExposedDropdownMenu(
                             expanded = overrideDayDropdownExpanded,
                             onDismissRequest = { overrideDayDropdownExpanded = false },
-                            modifier = Modifier.background(SurfaceDarkVariant)
+                            modifier = Modifier.background(colors.surface)
                         ) {
                             for (d in 1..5) {
                                 DropdownMenuItem(
                                     text = {
                                         Text(
                                             text = DateUtils.getDayName(d) + if (d == schedule.dayOfWeek) " (Hari Asal)" else "",
-                                            color = if (d == newDayOfWeek) ElectricCyan else AlabasterGrey,
+                                            color = if (d == newDayOfWeek) colors.accentPrimary else colors.textPrimary,
                                             fontWeight = if (d == newDayOfWeek) FontWeight.Bold else FontWeight.Normal
                                         )
                                     },
@@ -1035,10 +1066,10 @@ fun ScheduleOverrideDialog(
                             label = { Text("Jam Mulai Baru") },
                             modifier = Modifier.weight(1f),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = AlabasterGrey,
-                                unfocusedTextColor = AlabasterGrey,
-                                focusedBorderColor = ElectricCyan,
-                                unfocusedBorderColor = DuskBlue
+                                focusedTextColor = colors.textPrimary,
+                                unfocusedTextColor = colors.textPrimary,
+                                focusedBorderColor = colors.accentPrimary,
+                                unfocusedBorderColor = colors.borderSubtle
                             )
                         )
                         OutlinedTextField(
@@ -1047,10 +1078,10 @@ fun ScheduleOverrideDialog(
                             label = { Text("Jam Selesai Baru") },
                             modifier = Modifier.weight(1f),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = AlabasterGrey,
-                                unfocusedTextColor = AlabasterGrey,
-                                focusedBorderColor = ElectricCyan,
-                                unfocusedBorderColor = DuskBlue
+                                focusedTextColor = colors.textPrimary,
+                                unfocusedTextColor = colors.textPrimary,
+                                focusedBorderColor = colors.accentPrimary,
+                                unfocusedBorderColor = colors.borderSubtle
                             )
                         )
                     }
@@ -1064,10 +1095,10 @@ fun ScheduleOverrideDialog(
                         placeholder = { Text("e.g. Lab Jaringan Lt. 2") },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = AlabasterGrey,
-                            unfocusedTextColor = AlabasterGrey,
-                            focusedBorderColor = ElectricCyan,
-                            unfocusedBorderColor = DuskBlue
+                            focusedTextColor = colors.textPrimary,
+                            unfocusedTextColor = colors.textPrimary,
+                            focusedBorderColor = colors.accentPrimary,
+                            unfocusedBorderColor = colors.borderSubtle
                         )
                     )
                 }
@@ -1079,10 +1110,10 @@ fun ScheduleOverrideDialog(
                     placeholder = { Text("e.g. Info dari Bu Dosen di WA") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = AlabasterGrey,
-                        unfocusedTextColor = AlabasterGrey,
-                        focusedBorderColor = ElectricCyan,
-                        unfocusedBorderColor = DuskBlue
+                        focusedTextColor = colors.textPrimary,
+                        unfocusedTextColor = colors.textPrimary,
+                        focusedBorderColor = colors.accentPrimary,
+                        unfocusedBorderColor = colors.borderSubtle
                     )
                 )
             }
@@ -1111,7 +1142,7 @@ fun ScheduleOverrideDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Batal", color = DustyDenim)
+                Text("Batal", color = colors.textSecondary)
             }
         }
     )

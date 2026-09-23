@@ -1,8 +1,6 @@
 package com.example.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,7 +41,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -60,16 +57,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.example.ui.theme.AlabasterGrey
 import com.example.ui.theme.CrimsonRed
-import com.example.ui.theme.DuskBlue
-import com.example.ui.theme.DustyDenim
-import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.InkBlack
+import com.example.ui.theme.MahaTheme
 import com.example.ui.theme.NeonEmerald
-import com.example.ui.theme.PrussianBlue
-import com.example.ui.theme.SurfaceDarkVariant
-import com.example.ui.viewmodel.BackgroundImportState
 import com.example.ui.viewmodel.MahaSigmaViewModel
 import com.example.util.DateUtils
 import com.example.util.ParsedScheduleItem
@@ -85,6 +76,7 @@ fun BackgroundPdfImportDialog(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.importState.collectAsState()
+    val colors = MahaTheme.colors
 
     if (!state.isDialogVisible) return
 
@@ -105,8 +97,8 @@ fun BackgroundPdfImportDialog(
                 .fillMaxWidth(0.94f)
                 .fillMaxHeight(0.85f)
                 .clip(RoundedCornerShape(24.dp))
-                .border(1.dp, DuskBlue.copy(alpha = 0.8f), RoundedCornerShape(24.dp)),
-            color = InkBlack
+                .border(1.dp, colors.borderSubtle, RoundedCornerShape(24.dp)),
+            color = colors.surface
         ) {
             Column(
                 modifier = Modifier
@@ -138,14 +130,14 @@ fun BackgroundPdfImportDialog(
                         Column {
                             Text(
                                 text = "Impor Tabel Jadwal",
-                                color = AlabasterGrey,
+                                color = colors.textPrimary,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             if (state.fileName.isNotBlank()) {
                                 Text(
                                     text = state.fileName,
-                                    color = DustyDenim,
+                                    color = colors.textSecondary,
                                     fontSize = 12.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -162,14 +154,14 @@ fun BackgroundPdfImportDialog(
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Tutup",
-                                tint = DustyDenim
+                                tint = colors.textSecondary
                             )
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(color = DuskBlue.copy(alpha = 0.6f))
+                HorizontalDivider(color = colors.borderSubtle.copy(alpha = 0.6f))
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Content area based on state
@@ -188,14 +180,14 @@ fun BackgroundPdfImportDialog(
                                 modifier = Modifier.padding(24.dp)
                             ) {
                                 CircularProgressIndicator(
-                                    color = NeonEmerald,
+                                    color = colors.accentPrimary,
                                     strokeWidth = 3.5.dp,
                                     modifier = Modifier.size(54.dp)
                                 )
                                 Spacer(modifier = Modifier.height(20.dp))
                                 Text(
                                     text = "Memproses Tabel di Belakang Layar...",
-                                    color = AlabasterGrey,
+                                    color = colors.textPrimary,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center
@@ -203,7 +195,7 @@ fun BackgroundPdfImportDialog(
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = "Mengekstrak baris tabel, mencocokkan kode mata kuliah, hari, jam, ruang, dan dosen pengampu...",
-                                    color = DustyDenim,
+                                    color = colors.textSecondary,
                                     fontSize = 13.sp,
                                     textAlign = TextAlign.Center,
                                     lineHeight = 18.sp
@@ -212,12 +204,12 @@ fun BackgroundPdfImportDialog(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
-                                        .background(PrussianBlue.copy(alpha = 0.8f))
+                                        .background(colors.surfaceVariant)
                                         .padding(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
                                     Text(
                                         text = "Berkas: ${state.fileName}",
-                                        color = ElectricCyan,
+                                        color = colors.accentPrimary,
                                         fontSize = 12.sp,
                                         fontFamily = FontFamily.Monospace
                                     )
@@ -249,7 +241,7 @@ fun BackgroundPdfImportDialog(
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
                                     text = "Tabel Tidak Ditemukan",
-                                    color = AlabasterGrey,
+                                    color = colors.textPrimary,
                                     fontSize = 17.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center
@@ -257,7 +249,7 @@ fun BackgroundPdfImportDialog(
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = state.errorMessage ?: "Format berkas tidak sesuai atau tabel tidak dapat terbaca.",
-                                    color = DustyDenim,
+                                    color = colors.textSecondary,
                                     fontSize = 13.sp,
                                     textAlign = TextAlign.Center,
                                     lineHeight = 18.sp
@@ -265,9 +257,9 @@ fun BackgroundPdfImportDialog(
                                 Spacer(modifier = Modifier.height(24.dp))
                                 Button(
                                     onClick = { viewModel.dismissImportDialog() },
-                                    colors = ButtonDefaults.buttonColors(containerColor = DuskBlue)
+                                    colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
                                 ) {
-                                    Text("Tutup", color = AlabasterGrey)
+                                    Text("Tutup", color = InkBlack, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -275,7 +267,6 @@ fun BackgroundPdfImportDialog(
                         // 3. SUKSES MENEMUKAN TABEL JADWAL
                         state.items.isNotEmpty() -> {
                             val allSelected = state.items.all { it.isSelected }
-                            val selectedCount = state.items.count { it.isSelected }
 
                             Column(modifier = Modifier.fillMaxSize()) {
                                 // Status bar ringkasan tabel
@@ -283,7 +274,7 @@ fun BackgroundPdfImportDialog(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(PrussianBlue)
+                                        .background(colors.surfaceVariant)
                                         .padding(horizontal = 14.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -298,7 +289,7 @@ fun BackgroundPdfImportDialog(
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             text = "${state.items.size} Mata Kuliah Terdeteksi",
-                                            color = AlabasterGrey,
+                                            color = colors.textPrimary,
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -322,7 +313,7 @@ fun BackgroundPdfImportDialog(
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = if (allSelected) "Batal Semua" else "Pilih Semua",
-                                            color = DustyDenim,
+                                            color = colors.textSecondary,
                                             fontSize = 12.sp
                                         )
                                     }
@@ -352,7 +343,7 @@ fun BackgroundPdfImportDialog(
                         else -> {
                             Text(
                                 text = "Menunggu data...",
-                                color = DustyDenim,
+                                color = colors.textSecondary,
                                 fontSize = 13.sp
                             )
                         }
@@ -364,7 +355,7 @@ fun BackgroundPdfImportDialog(
                     val selectedCount = state.items.count { it.isSelected }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider(color = DuskBlue.copy(alpha = 0.6f))
+                    HorizontalDivider(color = colors.borderSubtle.copy(alpha = 0.6f))
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Row(
@@ -375,9 +366,9 @@ fun BackgroundPdfImportDialog(
                             onClick = { viewModel.dismissImportDialog() },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, DuskBlue)
+                            border = BorderStroke(1.dp, colors.borderSubtle)
                         ) {
-                            Text("Batal", color = DustyDenim)
+                            Text("Batal", color = colors.textSecondary)
                         }
 
                         Button(
@@ -388,7 +379,7 @@ fun BackgroundPdfImportDialog(
                             enabled = selectedCount > 0,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = NeonEmerald,
-                                disabledContainerColor = DuskBlue.copy(alpha = 0.5f)
+                                disabledContainerColor = colors.borderSubtle.copy(alpha = 0.5f)
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -418,6 +409,7 @@ private fun ExtractedScheduleRowCard(
     onToggleSelect: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = MahaTheme.colors
     val dayName = DateUtils.getDayName(item.dayOfWeek)
     val itemColor = try {
         Color(android.graphics.Color.parseColor(item.colorHex))
@@ -430,12 +422,12 @@ private fun ExtractedScheduleRowCard(
             .fillMaxWidth()
             .clickable { onToggleSelect(!item.isSelected) },
         colors = CardDefaults.cardColors(
-            containerColor = if (item.isSelected) PrussianBlue else SurfaceDarkVariant
+            containerColor = if (item.isSelected) colors.surfaceVariant else colors.surface
         ),
         shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             1.dp,
-            if (item.isSelected) DuskBlue else Color.Transparent
+            if (item.isSelected) colors.accentPrimary.copy(alpha = 0.6f) else colors.borderSubtle
         )
     ) {
         Row(
@@ -461,8 +453,8 @@ private fun ExtractedScheduleRowCard(
                 modifier = Modifier
                     .width(4.dp)
                     .height(44.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(itemColor)
+                .clip(RoundedCornerShape(2.dp))
+                .background(itemColor)
             )
 
             Spacer(modifier = Modifier.width(10.dp))
@@ -476,12 +468,12 @@ private fun ExtractedScheduleRowCard(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(DuskBlue)
+                                .background(colors.accentPrimary.copy(alpha = 0.15f))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
                                 text = item.courseCode,
-                                color = ElectricCyan,
+                                color = colors.accentPrimary,
                                 fontSize = 10.sp,
                                 fontFamily = FontFamily.Monospace,
                                 fontWeight = FontWeight.Bold
@@ -491,7 +483,7 @@ private fun ExtractedScheduleRowCard(
 
                     Text(
                         text = item.courseName,
-                        color = AlabasterGrey,
+                        color = colors.textPrimary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
@@ -515,7 +507,7 @@ private fun ExtractedScheduleRowCard(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "$dayName, ${item.startTime} - ${item.endTime}",
-                            color = AlabasterGrey,
+                            color = colors.textPrimary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -524,7 +516,7 @@ private fun ExtractedScheduleRowCard(
                     if (item.room.isNotBlank()) {
                         Text(
                             text = "• ${item.room}",
-                            color = DustyDenim,
+                            color = colors.textSecondary,
                             fontSize = 11.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -536,7 +528,7 @@ private fun ExtractedScheduleRowCard(
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "Dosen: ${item.lecturer}",
-                        color = DustyDenim.copy(alpha = 0.8f),
+                        color = colors.textSecondary.copy(alpha = 0.8f),
                         fontSize = 10.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis

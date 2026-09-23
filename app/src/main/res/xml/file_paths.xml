@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="cache_pdf" path="exported_notes/" />
+    <cache-path name="cache_root" path="." />
+    <files-path name="internal_board_notes" path="board_notes/" />
+    <files-path name="internal_files" path="." />
+</paths>

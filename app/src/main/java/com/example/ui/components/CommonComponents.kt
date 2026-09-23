@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.AlabasterGrey
@@ -30,6 +31,7 @@ import com.example.ui.theme.DuskBlue
 import com.example.ui.theme.DustyDenim
 import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.InkBlack
+import com.example.ui.theme.MahaTheme
 import com.example.ui.theme.NeonEmerald
 import com.example.ui.theme.PrussianBlue
 import com.example.ui.theme.SunsetAmber
@@ -65,18 +67,26 @@ fun CourseTag(
     colorHex: String? = null,
     modifier: Modifier = Modifier
 ) {
+    val colors = MahaTheme.colors
     val parsedColor = try {
         if (!colorHex.isNullOrBlank()) Color(android.graphics.Color.parseColor(colorHex))
-        else ElectricCyan
+        else colors.accentPrimary
     } catch (e: Exception) {
-        ElectricCyan
+        colors.accentPrimary
     }
+
+    val isCategoryCode = code.equals("Teori", ignoreCase = true) ||
+                         code.equals("Praktik", ignoreCase = true) ||
+                         code.equals("Praktikum", ignoreCase = true) ||
+                         code.equals(name, ignoreCase = true)
+
+    val displayText = if (!code.isNullOrBlank() && !isCategoryCode) "$code • $name" else name
 
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(6.dp))
-            .background(PrussianBlue)
-            .border(1.dp, parsedColor.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+            .background(colors.surfaceVariant)
+            .border(1.dp, parsedColor.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
             .padding(horizontal = 8.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -87,31 +97,33 @@ fun CourseTag(
                 .background(parsedColor)
         )
         Spacer(modifier = Modifier.width(6.dp))
-        val displayText = if (!code.isNullOrBlank()) "$code • $name" else name
         Text(
             text = displayText,
-            color = AlabasterGrey,
+            color = colors.textPrimary,
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
-            maxLines = 1
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
 
 @Composable
 fun StatusOverrideBadge(status: String, modifier: Modifier = Modifier) {
+    val colors = MahaTheme.colors
     val (bg, fg, text) = when (status) {
-        "CANCELED" -> Triple(CrimsonRed.copy(alpha = 0.25f), CrimsonRed, "🚫 Kelas Diliburkan")
-        "CHANGED_TIME" -> Triple(SunsetAmber.copy(alpha = 0.25f), SunsetAmber, "⏱ Jam Berubah")
-        "CHANGED_ROOM" -> Triple(DuskBlue.copy(alpha = 0.35f), ElectricCyan, "📍 Pindah Ruangan")
-        "ONLINE" -> Triple(NeonEmerald.copy(alpha = 0.25f), NeonEmerald, "💻 Kuliah Online")
-        else -> Triple(DustyDenim.copy(alpha = 0.2f), AlabasterGrey, status)
+        "CANCELED" -> Triple(CrimsonRed.copy(alpha = 0.15f), CrimsonRed, "🚫 Kelas Diliburkan")
+        "CHANGED_TIME" -> Triple(SunsetAmber.copy(alpha = 0.15f), SunsetAmber, "⏱ Jam Berubah")
+        "CHANGED_ROOM" -> Triple(colors.accentPrimary.copy(alpha = 0.15f), colors.accentPrimary, "📍 Pindah Ruangan")
+        "ONLINE" -> Triple(NeonEmerald.copy(alpha = 0.15f), NeonEmerald, "💻 Kuliah Online")
+        else -> Triple(colors.surfaceVariant, colors.textPrimary, status)
     }
 
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(6.dp))
             .background(bg)
+            .border(1.dp, fg.copy(alpha = 0.35f), RoundedCornerShape(6.dp))
             .padding(horizontal = 8.dp, vertical = 3.dp)
     ) {
         Text(
@@ -122,3 +134,4 @@ fun StatusOverrideBadge(status: String, modifier: Modifier = Modifier) {
         )
     }
 }
+

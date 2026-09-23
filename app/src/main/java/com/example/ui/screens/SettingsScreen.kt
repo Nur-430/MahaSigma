@@ -8,7 +8,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,21 +37,17 @@ import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -71,25 +66,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.R
 import com.example.data.entity.CourseEntity
+import com.example.ui.components.AboutAppSection
 import com.example.ui.components.BackgroundPdfImportDialog
-import com.example.ui.theme.AlabasterGrey
+import com.example.ui.components.ThemeSelectorCard
+import com.example.ui.components.WidgetGuideCard
 import com.example.ui.theme.CrimsonRed
-import com.example.ui.theme.DuskBlue
-import com.example.ui.theme.DustyDenim
-import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.InkBlack
+import com.example.ui.theme.MahaTheme
 import com.example.ui.theme.NeonEmerald
-import com.example.ui.theme.PrussianBlue
 import com.example.ui.theme.SunsetAmber
-import com.example.ui.theme.SurfaceDarkVariant
 import com.example.ui.viewmodel.MahaSigmaViewModel
 import kotlinx.coroutines.launch
 
@@ -101,6 +92,8 @@ fun SettingsScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val courses by viewModel.courses.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val colors = MahaTheme.colors
 
     var showAddEditCourseDialog by remember { mutableStateOf(false) }
     var courseToEdit by remember { mutableStateOf<CourseEntity?>(null) }
@@ -128,7 +121,7 @@ fun SettingsScreen(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(InkBlack),
+            .background(colors.background),
         contentPadding = PaddingValues(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
@@ -137,25 +130,38 @@ fun SettingsScreen(
             Column {
                 Text(
                     text = "Pengaturan & Manajemen",
-                    color = AlabasterGrey,
+                    color = colors.textPrimary,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Mata kuliah, backup JSON offline-first, dan preferensi aplikasi",
-                    color = DustyDenim,
+                    text = "Mode tampilan, widget beranda, backup JSON, & info pengembang",
+                    color = colors.textSecondary,
                     fontSize = 12.sp
                 )
             }
+        }
+
+        // Section: Mode Tampilan (Dark / Light)
+        item {
+            ThemeSelectorCard(
+                currentMode = themeMode,
+                onModeSelected = { viewModel.setThemeMode(it) }
+            )
+        }
+
+        // Section: Widget Home Screen HP
+        item {
+            WidgetGuideCard()
         }
 
         // Section 1: Manajemen Mata Kuliah
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = PrussianBlue),
+                colors = CardDefaults.cardColors(containerColor = colors.surface),
                 shape = RoundedCornerShape(16.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, DuskBlue.copy(alpha = 0.5f))
+                border = BorderStroke(1.dp, colors.borderSubtle)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -164,11 +170,11 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Book, contentDescription = null, tint = ElectricCyan, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.Book, contentDescription = null, tint = colors.accentPrimary, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Mata Kuliah Semester Ini",
-                                color = AlabasterGrey,
+                                color = colors.textPrimary,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -180,8 +186,8 @@ fun SettingsScreen(
                                 showAddEditCourseDialog = true
                             },
                             colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = SurfaceDarkVariant,
-                                contentColor = ElectricCyan
+                                containerColor = colors.surfaceVariant,
+                                contentColor = colors.accentPrimary
                             ),
                             shape = RoundedCornerShape(10.dp)
                         ) {
@@ -196,7 +202,7 @@ fun SettingsScreen(
                     if (courses.isEmpty()) {
                         Text(
                             text = "Belum ada mata kuliah yang didaftarkan.",
-                            color = DustyDenim,
+                            color = colors.textSecondary,
                             fontSize = 13.sp,
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
@@ -224,9 +230,9 @@ fun SettingsScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = PrussianBlue),
+                colors = CardDefaults.cardColors(containerColor = colors.surface),
                 shape = RoundedCornerShape(16.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, DuskBlue.copy(alpha = 0.5f))
+                border = BorderStroke(1.dp, colors.borderSubtle)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -234,7 +240,7 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Impor Tabel Jadwal dari PDF",
-                            color = AlabasterGrey,
+                            color = colors.textPrimary,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -243,7 +249,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Pilih file PDF KRS atau spreadsheet jadwal dari portal kampus (SIAKAD). Sistem akan memproses dan mengekstrak tabel jadwal mata kuliah langsung di latar belakang secara otomatis.",
-                        color = DustyDenim,
+                        color = colors.textSecondary,
                         fontSize = 12.sp,
                         lineHeight = 18.sp
                     )
@@ -263,13 +269,13 @@ fun SettingsScreen(
                                 )
                             )
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = DuskBlue),
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = CrimsonRed, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = InkBlack, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Pilih Berkas PDF / Excel", fontWeight = FontWeight.Bold)
+                        Text("Pilih Berkas PDF / Excel", color = InkBlack, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -279,9 +285,9 @@ fun SettingsScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = PrussianBlue),
+                colors = CardDefaults.cardColors(containerColor = colors.surface),
                 shape = RoundedCornerShape(16.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, DuskBlue.copy(alpha = 0.5f))
+                border = BorderStroke(1.dp, colors.borderSubtle)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -289,7 +295,7 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Cadangan & Pemulihan (JSON)",
-                            color = AlabasterGrey,
+                            color = colors.textPrimary,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -298,7 +304,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Ekspor seluruh jadwal, tugas, catatan, dan mata kuliah ke berkas teks JSON. Aman, mandiri, dan dapat dipindahkan antar perangkat tanpa cloud server.",
-                        color = DustyDenim,
+                        color = colors.textSecondary,
                         fontSize = 12.sp,
                         lineHeight = 18.sp
                     )
@@ -318,9 +324,10 @@ fun SettingsScreen(
                                     showExportDialog = true
                                 }
                             },
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ElectricCyan),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.accentPrimary),
                             modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp)
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, colors.accentPrimary.copy(alpha = 0.5f))
                         ) {
                             Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
@@ -335,7 +342,8 @@ fun SettingsScreen(
                             },
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonEmerald),
                             modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp)
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, NeonEmerald.copy(alpha = 0.5f))
                         ) {
                             Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
@@ -346,122 +354,47 @@ fun SettingsScreen(
             }
         }
 
-        // Section 3: Reset Data & Tentang Aplikasi
+        // Section 3: Tentang Aplikasi & Informasi Pengembang (Versi Ringkas & Inti)
+        item {
+            AboutAppSection()
+        }
+
+        // Section 4: Tindakan Berbahaya (Reset Data)
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = PrussianBlue),
+                colors = CardDefaults.cardColors(containerColor = colors.surface),
                 shape = RoundedCornerShape(16.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, DuskBlue.copy(alpha = 0.5f))
+                border = BorderStroke(1.dp, CrimsonRed.copy(alpha = 0.3f))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_app_logo),
-                            contentDescription = "Logo MahaSigma",
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .border(1.dp, DuskBlue, RoundedCornerShape(12.dp))
+                        Icon(Icons.Default.Refresh, contentDescription = null, tint = CrimsonRed, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Zona Berbahaya",
+                            color = CrimsonRed,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "MahaSigma",
-                                color = AlabasterGrey,
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "v1.0 • Asisten Akademik Mahasiswa",
-                                color = DustyDenim,
-                                fontSize = 11.sp,
-                                fontFamily = FontFamily.Monospace
-                            )
-                        }
                     }
-
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Offline-first SQLite/Room, estetika Code-Editor, dan penajam papan tulis.",
-                        color = DustyDenim,
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily.Monospace
+                        text = "Mengosongkan seluruh database lokal (jadwal, tugas, dan catatan). Tindakan ini tidak dapat dibatalkan.",
+                        color = colors.textSecondary,
+                        fontSize = 11.sp
                     )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(SurfaceDarkVariant)
-                            .border(1.dp, DuskBlue.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                            .padding(10.dp)
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Kompatibilitas Arsitektur", color = AlabasterGrey, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(NeonEmerald.copy(alpha = 0.15f))
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(
-                                            text = "32-bit",
-                                            color = NeonEmerald,
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(ElectricCyan.copy(alpha = 0.15f))
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(
-                                            text = "64-bit",
-                                            color = ElectricCyan,
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                            }
-                            Text(
-                                text = "Target ABI: armeabi-v7a, arm64-v8a, x86, x86_64",
-                                color = DustyDenim,
-                                fontSize = 10.sp,
-                                fontFamily = FontFamily.Monospace
-                            )
-                            val is64BitDevice = android.os.Process.is64Bit()
-                            val currentAbi = android.os.Build.SUPPORTED_ABIS.firstOrNull() ?: "Unknown"
-                            Text(
-                                text = "Perangkat Anda: ${if (is64BitDevice) "64-bit" else "32-bit"} ($currentAbi)",
-                                color = ElectricCyan,
-                                fontSize = 10.sp,
-                                fontFamily = FontFamily.Monospace
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
+                    Spacer(modifier = Modifier.height(12.dp))
                     OutlinedButton(
                         onClick = { showResetConfirmDialog = true },
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = CrimsonRed),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp)
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, CrimsonRed.copy(alpha = 0.5f))
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Reset / Kosongkan Seluruh Data", fontSize = 12.sp)
+                        Text("Reset / Kosongkan Seluruh Data", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -484,12 +417,12 @@ fun SettingsScreen(
     if (courseToDelete != null) {
         AlertDialog(
             onDismissRequest = { courseToDelete = null },
-            containerColor = PrussianBlue,
-            title = { Text("Hapus Mata Kuliah?", color = AlabasterGrey) },
+            containerColor = colors.surface,
+            title = { Text("Hapus Mata Kuliah?", color = colors.textPrimary) },
             text = {
                 Text(
                     "Menghapus '${courseToDelete?.name}' juga akan menghapus jadwal terkait yang terhubung.",
-                    color = DustyDenim
+                    color = colors.textSecondary
                 )
             },
             confirmButton = {
@@ -505,7 +438,7 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { courseToDelete = null }) {
-                    Text("Batal", color = DustyDenim)
+                    Text("Batal", color = colors.textSecondary)
                 }
             }
         )
@@ -515,19 +448,19 @@ fun SettingsScreen(
     if (showExportDialog) {
         AlertDialog(
             onDismissRequest = { showExportDialog = false },
-            containerColor = PrussianBlue,
+            containerColor = colors.surface,
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.CloudUpload, contentDescription = null, tint = ElectricCyan)
+                    Icon(Icons.Default.CloudUpload, contentDescription = null, tint = colors.accentPrimary)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Hasil Ekspor Backup JSON", color = AlabasterGrey, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("Hasil Ekspor Backup JSON", color = colors.textPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             },
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "Data database siap dicadangkan. Kamu dapat menyalin teks JSON atau membagikannya ke aplikasi lain.",
-                        color = DustyDenim,
+                        color = colors.textSecondary,
                         fontSize = 12.sp
                     )
                     Spacer(modifier = Modifier.height(10.dp))
@@ -536,14 +469,14 @@ fun SettingsScreen(
                             .fillMaxWidth()
                             .height(180.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(InkBlack)
-                            .border(1.dp, DuskBlue, RoundedCornerShape(8.dp))
+                            .background(colors.surfaceVariant)
+                            .border(1.dp, colors.borderSubtle, RoundedCornerShape(8.dp))
                             .padding(8.dp)
                             .verticalScroll(rememberScrollState())
                     ) {
                         Text(
                             text = exportedJsonText,
-                            color = AlabasterGrey,
+                            color = colors.textPrimary,
                             fontSize = 11.sp,
                             fontFamily = FontFamily.Monospace
                         )
@@ -561,8 +494,8 @@ fun SettingsScreen(
                             Toast.makeText(context, "JSON berhasil disalin ke Clipboard!", Toast.LENGTH_SHORT).show()
                         },
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = SurfaceDarkVariant,
-                            contentColor = ElectricCyan
+                            containerColor = colors.surfaceVariant,
+                            contentColor = colors.accentPrimary
                         )
                     ) {
                         Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(14.dp))
@@ -580,17 +513,17 @@ fun SettingsScreen(
                             }
                             context.startActivity(Intent.createChooser(shareIntent, "Bagikan Cadangan MahaSigma"))
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = DuskBlue)
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
                     ) {
-                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp), tint = AlabasterGrey)
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp), tint = InkBlack)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Bagikan", fontSize = 12.sp, color = AlabasterGrey)
+                        Text("Bagikan", fontSize = 12.sp, color = InkBlack, fontWeight = FontWeight.Bold)
                     }
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showExportDialog = false }) {
-                    Text("Tutup", color = DustyDenim)
+                    Text("Tutup", color = colors.textSecondary)
                 }
             }
         )
@@ -602,19 +535,19 @@ fun SettingsScreen(
 
         AlertDialog(
             onDismissRequest = { showImportDialog = false },
-            containerColor = PrussianBlue,
+            containerColor = colors.surface,
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.CloudDownload, contentDescription = null, tint = NeonEmerald)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Pulihkan dari Teks JSON", color = AlabasterGrey, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("Pulihkan dari Teks JSON", color = colors.textPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             },
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = "Tempelkan teks JSON backup MahaSigma ke kotak di bawah untuk memulihkan seluruh data.",
-                        color = DustyDenim,
+                        color = colors.textSecondary,
                         fontSize = 12.sp
                     )
                     Spacer(modifier = Modifier.height(10.dp))
@@ -631,10 +564,10 @@ fun SettingsScreen(
                             .fillMaxWidth()
                             .height(180.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = AlabasterGrey,
-                            unfocusedTextColor = AlabasterGrey,
+                            focusedTextColor = colors.textPrimary,
+                            unfocusedTextColor = colors.textPrimary,
                             focusedBorderColor = NeonEmerald,
-                            unfocusedBorderColor = DuskBlue
+                            unfocusedBorderColor = colors.borderSubtle
                         )
                     )
 
@@ -672,7 +605,7 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showImportDialog = false }) {
-                    Text("Batal", color = DustyDenim)
+                    Text("Batal", color = colors.textSecondary)
                 }
             }
         )
@@ -682,12 +615,12 @@ fun SettingsScreen(
     if (showResetConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showResetConfirmDialog = false },
-            containerColor = PrussianBlue,
+            containerColor = colors.surface,
             title = { Text("Kosongkan Seluruh Data?", color = CrimsonRed, fontWeight = FontWeight.Bold) },
             text = {
                 Text(
                     "Semua mata kuliah, jadwal, tugas, dan catatan materi akan dihapus permanen dari memori internal HP kamu. Tindakan ini tidak dapat dibatalkan.",
-                    color = AlabasterGrey
+                    color = colors.textPrimary
                 )
             },
             confirmButton = {
@@ -705,7 +638,7 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showResetConfirmDialog = false }) {
-                    Text("Batal", color = DustyDenim)
+                    Text("Batal", color = colors.textSecondary)
                 }
             }
         )
@@ -721,24 +654,25 @@ fun CourseItemRow(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val colors = MahaTheme.colors
     val courseColor = try {
         Color(android.graphics.Color.parseColor(course.colorHex))
     } catch (e: Exception) {
-        ElectricCyan
+        colors.accentPrimary
     }
 
     val isPraktik = course.code.equals("Praktik", ignoreCase = true) ||
                     course.name.contains("Praktik", ignoreCase = true)
     val badgeLabel = if (isPraktik) "Praktik" else "Teori"
-    val badgeColor = if (isPraktik) Color(0xFFF59E0B) else ElectricCyan
-    val badgeBg = if (isPraktik) Color(0xFF78350F).copy(alpha = 0.35f) else ElectricCyan.copy(alpha = 0.15f)
+    val badgeColor = if (isPraktik) SunsetAmber else colors.accentPrimary
+    val badgeBg = if (isPraktik) SunsetAmber.copy(alpha = 0.15f) else colors.accentPrimary.copy(alpha = 0.15f)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(SurfaceDarkVariant)
-            .border(1.dp, DuskBlue.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+            .background(colors.surfaceVariant)
+            .border(1.dp, colors.borderSubtle, RoundedCornerShape(10.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -752,11 +686,11 @@ fun CourseItemRow(
 
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Badge Keterangan Teori / Praktik (menggantikan kode matkul sesuai instruksi)
+                // Badge Keterangan Teori / Praktik
                 Surface(
                     shape = RoundedCornerShape(6.dp),
                     color = badgeBg,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, badgeColor.copy(alpha = 0.5f))
+                    border = BorderStroke(1.dp, badgeColor.copy(alpha = 0.5f))
                 ) {
                     Text(
                         text = badgeLabel,
@@ -770,7 +704,7 @@ fun CourseItemRow(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = course.name,
-                    color = AlabasterGrey,
+                    color = colors.textPrimary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -779,14 +713,14 @@ fun CourseItemRow(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = course.lecturer,
-                    color = DustyDenim,
+                    color = colors.textSecondary,
                     fontSize = 11.sp
                 )
             }
         }
 
         IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
-            Icon(Icons.Default.Edit, contentDescription = "Edit", tint = DustyDenim, modifier = Modifier.size(16.dp))
+            Icon(Icons.Default.Edit, contentDescription = "Edit", tint = colors.textSecondary, modifier = Modifier.size(16.dp))
         }
 
         IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
@@ -801,6 +735,7 @@ fun AddEditCourseDialog(
     onDismiss: () -> Unit,
     onSave: (CourseEntity) -> Unit
 ) {
+    val colors = MahaTheme.colors
     var name by remember { mutableStateOf(course?.name ?: "") }
     var code by remember { mutableStateOf(course?.code ?: "") }
     var lecturer by remember { mutableStateOf(course?.lecturer ?: "") }
@@ -819,11 +754,11 @@ fun AddEditCourseDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = PrussianBlue,
+        containerColor = colors.surface,
         title = {
             Text(
                 text = if (course == null) "Tambah Mata Kuliah" else "Ubah Mata Kuliah",
-                color = AlabasterGrey,
+                color = colors.textPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -840,10 +775,10 @@ fun AddEditCourseDialog(
                     placeholder = { Text("e.g. Struktur Data & Algoritma") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = AlabasterGrey,
-                        unfocusedTextColor = AlabasterGrey,
-                        focusedBorderColor = ElectricCyan,
-                        unfocusedBorderColor = DuskBlue
+                        focusedTextColor = colors.textPrimary,
+                        unfocusedTextColor = colors.textPrimary,
+                        focusedBorderColor = colors.accentPrimary,
+                        unfocusedBorderColor = colors.borderSubtle
                     )
                 )
 
@@ -858,10 +793,10 @@ fun AddEditCourseDialog(
                         placeholder = { Text("e.g. IF201") },
                         modifier = Modifier.weight(1f),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = AlabasterGrey,
-                            unfocusedTextColor = AlabasterGrey,
-                            focusedBorderColor = ElectricCyan,
-                            unfocusedBorderColor = DuskBlue
+                            focusedTextColor = colors.textPrimary,
+                            unfocusedTextColor = colors.textPrimary,
+                            focusedBorderColor = colors.accentPrimary,
+                            unfocusedBorderColor = colors.borderSubtle
                         )
                     )
 
@@ -872,16 +807,16 @@ fun AddEditCourseDialog(
                         placeholder = { Text("e.g. Dr. Budi") },
                         modifier = Modifier.weight(1.5f),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = AlabasterGrey,
-                            unfocusedTextColor = AlabasterGrey,
-                            focusedBorderColor = ElectricCyan,
-                            unfocusedBorderColor = DuskBlue
+                            focusedTextColor = colors.textPrimary,
+                            unfocusedTextColor = colors.textPrimary,
+                            focusedBorderColor = colors.accentPrimary,
+                            unfocusedBorderColor = colors.borderSubtle
                         )
                     )
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "Pilih Warna Aksen Matkul:", color = DustyDenim, fontSize = 12.sp)
+                Text(text = "Pilih Warna Aksen Matkul:", color = colors.textSecondary, fontSize = 12.sp)
 
                 // Color Swatches
                 Row(
@@ -890,16 +825,16 @@ fun AddEditCourseDialog(
                 ) {
                     presetColors.forEach { hex ->
                         val isSelected = colorHex.equals(hex, ignoreCase = true)
-                        val color = Color(android.graphics.Color.parseColor(hex))
+                        val swatchColor = Color(android.graphics.Color.parseColor(hex))
 
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(CircleShape)
-                                .background(color)
+                                .background(swatchColor)
                                 .border(
                                     if (isSelected) 3.dp else 1.dp,
-                                    if (isSelected) AlabasterGrey else Color.Transparent,
+                                    if (isSelected) colors.accentPrimary else Color.Transparent,
                                     CircleShape
                                 )
                                 .clickable { colorHex = hex }
@@ -923,14 +858,14 @@ fun AddEditCourseDialog(
                         )
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = DuskBlue)
+                colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
             ) {
-                Text("Simpan", color = AlabasterGrey)
+                Text("Simpan", color = InkBlack, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Batal", color = DustyDenim)
+                Text("Batal", color = colors.textSecondary)
             }
         }
     )

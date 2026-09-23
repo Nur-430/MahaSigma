@@ -77,16 +77,11 @@ import com.example.data.entity.TaskEntity
 import com.example.data.entity.TaskWithCourse
 import com.example.ui.components.CourseTag
 import com.example.ui.components.PriorityBadge
-import com.example.ui.theme.AlabasterGrey
 import com.example.ui.theme.CrimsonRed
-import com.example.ui.theme.DuskBlue
-import com.example.ui.theme.DustyDenim
-import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.InkBlack
+import com.example.ui.theme.MahaTheme
 import com.example.ui.theme.NeonEmerald
-import com.example.ui.theme.PrussianBlue
 import com.example.ui.theme.SunsetAmber
-import com.example.ui.theme.SurfaceDarkVariant
 import com.example.ui.viewmodel.MahaSigmaViewModel
 import com.example.ui.viewmodel.TaskFilter
 import com.example.util.DateUtils
@@ -98,6 +93,7 @@ fun TasksScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val colors = MahaTheme.colors
     val currentFilter by viewModel.taskFilter.collectAsStateWithLifecycle()
     val filteredTasks by viewModel.filteredTasks.collectAsStateWithLifecycle()
     val allTasks by viewModel.allTasks.collectAsStateWithLifecycle()
@@ -112,15 +108,15 @@ fun TasksScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = InkBlack,
+        containerColor = colors.background,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
                     taskToEdit = null
                     showAddEditDialog = true
                 },
-                containerColor = DuskBlue,
-                contentColor = AlabasterGrey,
+                containerColor = colors.accentPrimary,
+                contentColor = InkBlack,
                 modifier = Modifier
                     .padding(bottom = 80.dp)
                     .testTag("add_task_fab")
@@ -138,20 +134,20 @@ fun TasksScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(PrussianBlue)
-                    .border(1.dp, DuskBlue.copy(alpha = 0.4f), RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
+                    .background(colors.surface)
+                    .border(1.dp, colors.borderSubtle, RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
                     .padding(16.dp)
             ) {
                 Column {
                     Text(
                         text = "Manajemen Tugas & Deadline",
-                        color = AlabasterGrey,
+                        color = colors.textPrimary,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "Pantau tenggat waktu, tautan pengumpulan, dan alarm pengingat",
-                        color = DustyDenim,
+                        color = colors.textSecondary,
                         fontSize = 12.sp
                     )
 
@@ -199,42 +195,41 @@ fun TasksScreen(
                             tint = NeonEmerald,
                             modifier = Modifier.size(56.dp)
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = if (currentFilter == TaskFilter.AKTIF) "Tidak Ada Tugas Aktif!" else "Daftar Tugas Kosong",
-                            color = AlabasterGrey,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
+                            text = when (currentFilter) {
+                                TaskFilter.SEMUA -> "Belum ada tugas tercatat"
+                                TaskFilter.AKTIF -> "Tidak ada tugas aktif! Semua beres 🎉"
+                                TaskFilter.SELESAI -> "Belum ada tugas yang diselesaikan"
+                            },
+                            color = colors.textPrimary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = if (currentFilter == TaskFilter.AKTIF) {
-                                "Semua tugas perkuliahan sudah kamu selesaikan. Luar biasa! 🎉"
-                            } else {
-                                "Klik tombol '+' di bawah untuk mencatat tugas baru."
-                            },
-                            color = DustyDenim,
-                            fontSize = 13.sp,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            text = "Tekan tombol + di pojok kanan bawah untuk menambah tugas baru.",
+                            color = colors.textSecondary,
+                            fontSize = 13.sp
                         )
                     }
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 12.dp, start = 16.dp, end = 16.dp, bottom = 120.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(filteredTasks, key = { it.task.id }) { item ->
+                    items(filteredTasks, key = { it.task.id }) { taskWithCourse ->
                         TaskItemCard(
-                            taskWithCourse = item,
-                            onToggleComplete = { viewModel.toggleTaskCompletion(item.task) },
+                            taskWithCourse = taskWithCourse,
+                            onToggleComplete = { viewModel.toggleTaskCompletion(taskWithCourse.task) },
                             onEditClick = {
-                                taskToEdit = item.task
+                                taskToEdit = taskWithCourse.task
                                 showAddEditDialog = true
                             },
                             onDeleteClick = {
-                                taskToDelete = item.task
+                                taskToDelete = taskWithCourse.task
                             },
                             onOpenLink = { url ->
                                 try {
@@ -271,9 +266,9 @@ fun TasksScreen(
     if (taskToDelete != null) {
         AlertDialog(
             onDismissRequest = { taskToDelete = null },
-            containerColor = PrussianBlue,
-            title = { Text("Hapus Tugas?", color = AlabasterGrey) },
-            text = { Text("Tugas '${taskToDelete?.title}' akan dihapus permanen.", color = DustyDenim) },
+            containerColor = colors.surface,
+            title = { Text("Hapus Tugas?", color = colors.textPrimary) },
+            text = { Text("Tugas '${taskToDelete?.title}' akan dihapus permanen.", color = colors.textSecondary) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -287,7 +282,7 @@ fun TasksScreen(
             },
             dismissButton = {
                 TextButton(onClick = { taskToDelete = null }) {
-                    Text("Batal", color = DustyDenim)
+                    Text("Batal", color = colors.textSecondary)
                 }
             }
         )
@@ -301,13 +296,14 @@ fun TaskFilterChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = MahaTheme.colors
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(if (isSelected) DuskBlue else SurfaceDarkVariant)
+            .background(if (isSelected) colors.surface else colors.surfaceVariant)
             .border(
                 1.dp,
-                if (isSelected) ElectricCyan else DuskBlue.copy(alpha = 0.4f),
+                if (isSelected) colors.accentPrimary else colors.borderSubtle,
                 RoundedCornerShape(10.dp)
             )
             .clickable { onClick() }
@@ -316,7 +312,7 @@ fun TaskFilterChip(
     ) {
         Text(
             text = label,
-            color = if (isSelected) AlabasterGrey else DustyDenim,
+            color = if (isSelected) colors.textPrimary else colors.textSecondary,
             fontSize = 12.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
         )
@@ -332,30 +328,45 @@ fun TaskItemCard(
     onOpenLink: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = MahaTheme.colors
     val task = taskWithCourse.task
     val course = taskWithCourse.course
     var showMenu by remember { mutableStateOf(false) }
 
     val isOverdue = !task.isCompleted && task.dueDate < System.currentTimeMillis()
-    val isDueToday = !task.isCompleted && (task.dueDate - System.currentTimeMillis()) < (24 * 60 * 60 * 1000L)
+    val isDueToday = !task.isCompleted && (task.dueDate - System.currentTimeMillis()) in 0..(24 * 60 * 60 * 1000L)
+
+    val borderColor = when {
+        task.isCompleted -> colors.borderSubtle
+        isOverdue -> CrimsonRed.copy(alpha = 0.7f)
+        isDueToday -> SunsetAmber.copy(alpha = 0.7f)
+        else -> colors.borderSubtle
+    }
+
+    val deadlineBgColor = when {
+        task.isCompleted -> colors.surfaceVariant
+        isOverdue -> CrimsonRed.copy(alpha = 0.12f)
+        isDueToday -> SunsetAmber.copy(alpha = 0.12f)
+        else -> colors.surfaceVariant
+    }
+
+    val deadlineTextColor = when {
+        task.isCompleted -> colors.textSecondary
+        isOverdue -> CrimsonRed
+        isDueToday -> SunsetAmber
+        else -> colors.textPrimary
+    }
 
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (task.isCompleted) PrussianBlue.copy(alpha = 0.7f) else PrussianBlue
+            containerColor = colors.surface
         ),
         shape = RoundedCornerShape(16.dp),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            when {
-                task.isCompleted -> DuskBlue.copy(alpha = 0.3f)
-                isOverdue -> CrimsonRed.copy(alpha = 0.6f)
-                isDueToday -> SunsetAmber.copy(alpha = 0.6f)
-                else -> DuskBlue.copy(alpha = 0.5f)
-            }
-        )
+        border = androidx.compose.foundation.BorderStroke(1.dp, borderColor)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
+            // Header Row: Checkbox + Title + Priority + Menu
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top
@@ -365,13 +376,15 @@ fun TaskItemCard(
                     onCheckedChange = { onToggleComplete() },
                     colors = CheckboxDefaults.colors(
                         checkedColor = NeonEmerald,
-                        uncheckedColor = DustyDenim,
+                        uncheckedColor = colors.textSecondary,
                         checkmarkColor = InkBlack
                     ),
-                    modifier = Modifier.testTag("task_check_${task.id}")
+                    modifier = Modifier
+                        .padding(top = 2.dp)
+                        .testTag("task_check_${task.id}")
                 )
 
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
@@ -381,7 +394,7 @@ fun TaskItemCard(
                     ) {
                         Text(
                             text = task.title,
-                            color = if (task.isCompleted) DustyDenim else AlabasterGrey,
+                            color = if (task.isCompleted) colors.textSecondary else colors.textPrimary,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
@@ -389,6 +402,8 @@ fun TaskItemCard(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f)
                         )
+
+                        Spacer(modifier = Modifier.width(6.dp))
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             PriorityBadge(priority = task.priority)
@@ -400,22 +415,22 @@ fun TaskItemCard(
                                     Icon(
                                         imageVector = Icons.Default.MoreVert,
                                         contentDescription = "Opsi",
-                                        tint = DustyDenim,
+                                        tint = colors.textSecondary,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
                                 DropdownMenu(
                                     expanded = showMenu,
                                     onDismissRequest = { showMenu = false },
-                                    modifier = Modifier.background(SurfaceDarkVariant)
+                                    modifier = Modifier.background(colors.surface)
                                 ) {
                                     DropdownMenuItem(
-                                        text = { Text("Edit Tugas", color = AlabasterGrey) },
+                                        text = { Text("Edit Tugas", color = colors.textPrimary) },
                                         onClick = {
                                             showMenu = false
                                             onEditClick()
                                         },
-                                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = ElectricCyan) }
+                                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = colors.accentPrimary) }
                                     )
                                     DropdownMenuItem(
                                         text = { Text("Hapus Tugas", color = CrimsonRed) },
@@ -434,114 +449,118 @@ fun TaskItemCard(
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = task.description,
-                            color = DustyDenim,
+                            color = colors.textSecondary,
                             fontSize = 12.sp,
                             maxLines = 3,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
+                }
+            }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-                    // Tags & Deadline
+            // Course Tag Row (If present)
+            if (course != null) {
+                CourseTag(
+                    name = course.name,
+                    code = course.code,
+                    colorHex = course.colorHex,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
+            // Dedicated Deadline Banner (Full-width clean row, preventing awkward word-wrapping)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(deadlineBgColor)
+                    .border(
+                        1.dp,
+                        if (isOverdue || isDueToday) borderColor else colors.borderSubtle,
+                        RoundedCornerShape(8.dp)
+                    )
+                    .padding(horizontal = 10.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        tint = deadlineTextColor,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = DateUtils.getRelativeDeadline(task.dueDate, task.isCompleted),
+                        color = deadlineTextColor,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                if (task.reminderType != "NONE" && !task.isCompleted) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = 8.dp)
                     ) {
-                        if (course != null) {
-                            CourseTag(name = course.name, code = course.code, colorHex = course.colorHex)
-                        } else {
-                            Text(text = "Tugas Bebas", color = DustyDenim, fontSize = 11.sp)
+                        Icon(
+                            imageVector = Icons.Default.Alarm,
+                            contentDescription = "Pengingat",
+                            tint = if (isOverdue) CrimsonRed else SunsetAmber,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        val reminderLabel = when (task.reminderType) {
+                            "1_HOUR_BEFORE" -> "1 jam sblm"
+                            "1_DAY_BEFORE" -> "1 hari sblm"
+                            "2_DAYS_BEFORE" -> "2 hari sblm"
+                            else -> "Aktif"
                         }
-
-                        // Due date string
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.CalendarMonth,
-                                contentDescription = null,
-                                tint = when {
-                                    task.isCompleted -> DustyDenim
-                                    isOverdue -> CrimsonRed
-                                    isDueToday -> SunsetAmber
-                                    else -> ElectricCyan
-                                },
-                                modifier = Modifier.size(13.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = DateUtils.getRelativeDeadline(task.dueDate, task.isCompleted),
-                                color = when {
-                                    task.isCompleted -> DustyDenim
-                                    isOverdue -> CrimsonRed
-                                    isDueToday -> SunsetAmber
-                                    else -> AlabasterGrey
-                                },
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
+                        Text(
+                            text = reminderLabel,
+                            color = colors.textSecondary,
+                            fontSize = 11.sp
+                        )
                     }
+                }
+            }
 
-                    // Submission Link & Reminder badge
-                    if (!task.submissionLink.isNullOrBlank() || task.reminderType != "NONE") {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (!task.submissionLink.isNullOrBlank()) {
-                                Row(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(SurfaceDarkVariant)
-                                        .clickable { onOpenLink(task.submissionLink) }
-                                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                                        contentDescription = "Buka Link",
-                                        tint = ElectricCyan,
-                                        modifier = Modifier.size(12.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = "Tautan Tugas",
-                                        color = ElectricCyan,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            } else {
-                                Spacer(modifier = Modifier.width(1.dp))
-                            }
-
-                            if (task.reminderType != "NONE" && !task.isCompleted) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.Alarm,
-                                        contentDescription = "Pengingat",
-                                        tint = SunsetAmber,
-                                        modifier = Modifier.size(12.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    val reminderLabel = when (task.reminderType) {
-                                        "1_HOUR_BEFORE" -> "1 jam sblm"
-                                        "1_DAY_BEFORE" -> "1 hari sblm"
-                                        "2_DAYS_BEFORE" -> "2 hari sblm"
-                                        else -> "Aktif"
-                                    }
-                                    Text(
-                                        text = reminderLabel,
-                                        color = DustyDenim,
-                                        fontSize = 10.sp
-                                    )
-                                }
-                            }
-                        }
-                    }
+            // Submission Link Row (if available)
+            if (!task.submissionLink.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(colors.surfaceVariant)
+                        .clickable { onOpenLink(task.submissionLink) }
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                        contentDescription = "Buka Link",
+                        tint = colors.accentPrimary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = task.submissionLink,
+                        color = colors.accentPrimary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
@@ -557,6 +576,7 @@ fun AddEditTaskDialog(
     onSave: (TaskEntity, String) -> Unit
 ) {
     val context = LocalContext.current
+    val colors = MahaTheme.colors
 
     var title by remember { mutableStateOf(task?.title ?: "") }
     var description by remember { mutableStateOf(task?.description ?: "") }
@@ -571,7 +591,6 @@ fun AddEditTaskDialog(
             if (task != null) {
                 timeInMillis = task.dueDate
             } else {
-                // Default: 2 days from now at 23:59
                 add(Calendar.DAY_OF_YEAR, 2)
                 set(Calendar.HOUR_OF_DAY, 23)
                 set(Calendar.MINUTE, 59)
@@ -585,21 +604,26 @@ fun AddEditTaskDialog(
     var priorityDropdownExpanded by remember { mutableStateOf(false) }
     var reminderDropdownExpanded by remember { mutableStateOf(false) }
 
-    val priorityOptions = listOf("TINGGI" to "Tinggi", "SEDANG" to "Sedang", "RENDAH" to "Rendah")
+    val priorityOptions = listOf(
+        Pair("RENDAH", "Prioritas Rendah"),
+        Pair("SEDANG", "Prioritas Sedang"),
+        Pair("TINGGI", "Prioritas Tinggi")
+    )
+
     val reminderOptions = listOf(
-        "NONE" to "Tanpa Pengingat",
-        "1_HOUR_BEFORE" to "1 Jam Sebelum Deadline",
-        "1_DAY_BEFORE" to "1 Hari Sebelum Deadline",
-        "2_DAYS_BEFORE" to "2 Hari Sebelum Deadline"
+        Pair("NONE", "Tanpa Pengingat"),
+        Pair("1_HOUR_BEFORE", "1 Jam Sebelum"),
+        Pair("1_DAY_BEFORE", "1 Hari Sebelum"),
+        Pair("2_DAYS_BEFORE", "2 Hari Sebelum")
     )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = PrussianBlue,
+        containerColor = colors.surface,
         title = {
             Text(
-                text = if (task == null) "Tambah Tugas Baru" else "Ubah Tugas",
-                color = AlabasterGrey,
+                text = if (task == null) "Tambah Tugas Baru" else "Edit Tugas",
+                color = colors.textPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -609,29 +633,30 @@ fun AddEditTaskDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Title
+                // Judul Tugas
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
                     label = { Text("Judul Tugas *") },
-                    placeholder = { Text("e.g. Tugas Praktikum Modul 5") },
+                    placeholder = { Text("Contoh: Laporan Akhir Praktikum") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = AlabasterGrey,
-                        unfocusedTextColor = AlabasterGrey,
-                        focusedBorderColor = ElectricCyan,
-                        unfocusedBorderColor = DuskBlue
+                        focusedTextColor = colors.textPrimary,
+                        unfocusedTextColor = colors.textPrimary,
+                        focusedBorderColor = colors.accentPrimary,
+                        unfocusedBorderColor = colors.borderSubtle
                     )
                 )
 
                 // Course selector
                 ExposedDropdownMenuBox(
                     expanded = courseDropdownExpanded,
-                    onExpandedChange = { courseDropdownExpanded = it }
+                    onExpandedChange = { courseDropdownExpanded = it },
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     val currentCourse = courses.find { it.id == selectedCourseId }
                     OutlinedTextField(
-                        value = currentCourse?.let { "${it.code} - ${it.name}" } ?: "Tugas Bebas / Tanpa Matkul",
+                        value = currentCourse?.name ?: "Tugas Bebas (Tanpa Matkul)",
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Mata Kuliah") },
@@ -640,19 +665,19 @@ fun AddEditTaskDialog(
                             .fillMaxWidth()
                             .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = AlabasterGrey,
-                            unfocusedTextColor = AlabasterGrey,
-                            focusedBorderColor = ElectricCyan,
-                            unfocusedBorderColor = DuskBlue
+                            focusedTextColor = colors.textPrimary,
+                            unfocusedTextColor = colors.textPrimary,
+                            focusedBorderColor = colors.accentPrimary,
+                            unfocusedBorderColor = colors.borderSubtle
                         )
                     )
                     ExposedDropdownMenu(
                         expanded = courseDropdownExpanded,
                         onDismissRequest = { courseDropdownExpanded = false },
-                        modifier = Modifier.background(SurfaceDarkVariant)
+                        modifier = Modifier.background(colors.surface)
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Tugas Bebas (Tanpa Matkul)", color = AlabasterGrey) },
+                            text = { Text("Tugas Bebas (Tanpa Matkul)", color = colors.textPrimary) },
                             onClick = {
                                 selectedCourseId = null
                                 courseDropdownExpanded = false
@@ -660,7 +685,7 @@ fun AddEditTaskDialog(
                         )
                         courses.forEach { course ->
                             DropdownMenuItem(
-                                text = { Text("${course.code} - ${course.name}", color = AlabasterGrey) },
+                                text = { Text(course.name, color = colors.textPrimary) },
                                 onClick = {
                                     selectedCourseId = course.id
                                     courseDropdownExpanded = false
@@ -699,9 +724,9 @@ fun AddEditTaskDialog(
                             },
                         enabled = false,
                         colors = OutlinedTextFieldDefaults.colors(
-                            disabledTextColor = AlabasterGrey,
-                            disabledBorderColor = DuskBlue,
-                            disabledLabelColor = DustyDenim
+                            disabledTextColor = colors.textPrimary,
+                            disabledBorderColor = colors.borderSubtle,
+                            disabledLabelColor = colors.textSecondary
                         )
                     )
 
@@ -728,9 +753,9 @@ fun AddEditTaskDialog(
                             },
                         enabled = false,
                         colors = OutlinedTextFieldDefaults.colors(
-                            disabledTextColor = AlabasterGrey,
-                            disabledBorderColor = DuskBlue,
-                            disabledLabelColor = DustyDenim
+                            disabledTextColor = colors.textPrimary,
+                            disabledBorderColor = colors.borderSubtle,
+                            disabledLabelColor = colors.textSecondary
                         )
                     )
                 }
@@ -755,20 +780,20 @@ fun AddEditTaskDialog(
                                 .fillMaxWidth()
                                 .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = AlabasterGrey,
-                                unfocusedTextColor = AlabasterGrey,
-                                focusedBorderColor = ElectricCyan,
-                                unfocusedBorderColor = DuskBlue
+                                focusedTextColor = colors.textPrimary,
+                                unfocusedTextColor = colors.textPrimary,
+                                focusedBorderColor = colors.accentPrimary,
+                                unfocusedBorderColor = colors.borderSubtle
                             )
                         )
                         ExposedDropdownMenu(
                             expanded = priorityDropdownExpanded,
                             onDismissRequest = { priorityDropdownExpanded = false },
-                            modifier = Modifier.background(SurfaceDarkVariant)
+                            modifier = Modifier.background(colors.surface)
                         ) {
                             priorityOptions.forEach { (key, label) ->
                                 DropdownMenuItem(
-                                    text = { Text(label, color = AlabasterGrey) },
+                                    text = { Text(label, color = colors.textPrimary) },
                                     onClick = {
                                         priority = key
                                         priorityDropdownExpanded = false
@@ -793,20 +818,20 @@ fun AddEditTaskDialog(
                                 .fillMaxWidth()
                                 .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = AlabasterGrey,
-                                unfocusedTextColor = AlabasterGrey,
-                                focusedBorderColor = ElectricCyan,
-                                unfocusedBorderColor = DuskBlue
+                                focusedTextColor = colors.textPrimary,
+                                unfocusedTextColor = colors.textPrimary,
+                                focusedBorderColor = colors.accentPrimary,
+                                unfocusedBorderColor = colors.borderSubtle
                             )
                         )
                         ExposedDropdownMenu(
                             expanded = reminderDropdownExpanded,
                             onDismissRequest = { reminderDropdownExpanded = false },
-                            modifier = Modifier.background(SurfaceDarkVariant)
+                            modifier = Modifier.background(colors.surface)
                         ) {
                             reminderOptions.forEach { (key, label) ->
                                 DropdownMenuItem(
-                                    text = { Text(label, color = AlabasterGrey) },
+                                    text = { Text(label, color = colors.textPrimary) },
                                     onClick = {
                                         reminderType = key
                                         reminderDropdownExpanded = false
@@ -825,10 +850,10 @@ fun AddEditTaskDialog(
                     placeholder = { Text("e.g. classroom.google.com/...") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = AlabasterGrey,
-                        unfocusedTextColor = AlabasterGrey,
-                        focusedBorderColor = ElectricCyan,
-                        unfocusedBorderColor = DuskBlue
+                        focusedTextColor = colors.textPrimary,
+                        unfocusedTextColor = colors.textPrimary,
+                        focusedBorderColor = colors.accentPrimary,
+                        unfocusedBorderColor = colors.borderSubtle
                     )
                 )
 
@@ -842,10 +867,10 @@ fun AddEditTaskDialog(
                     minLines = 2,
                     maxLines = 4,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = AlabasterGrey,
-                        unfocusedTextColor = AlabasterGrey,
-                        focusedBorderColor = ElectricCyan,
-                        unfocusedBorderColor = DuskBlue
+                        focusedTextColor = colors.textPrimary,
+                        unfocusedTextColor = colors.textPrimary,
+                        focusedBorderColor = colors.accentPrimary,
+                        unfocusedBorderColor = colors.borderSubtle
                     )
                 )
             }
@@ -871,14 +896,14 @@ fun AddEditTaskDialog(
                         )
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = DuskBlue)
+                colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
             ) {
-                Text("Simpan Tugas", color = AlabasterGrey)
+                Text("Simpan Tugas", color = InkBlack, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Batal", color = DustyDenim)
+                Text("Batal", color = colors.textSecondary)
             }
         }
     )

@@ -101,6 +101,17 @@ data class NoteEntity(
     val title: String,
     val content: String,
     val localImagePath: String? = null,
+    val imagePaths: String = "",
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
-)
+) {
+    fun getAllImages(): List<String> {
+        val list = mutableListOf<String>()
+        if (imagePaths.isNotBlank()) {
+            list.addAll(imagePaths.split("\n").map { it.trim() }.filter { it.isNotEmpty() })
+        } else if (!localImagePath.isNullOrBlank()) {
+            list.add(localImagePath)
+        }
+        return list.distinct().take(5)
+    }
+}

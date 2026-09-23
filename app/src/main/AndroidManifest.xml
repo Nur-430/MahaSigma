@@ -30,6 +30,54 @@
         <receiver
             android:name=".receiver.TaskAlarmReceiver"
             android:exported="false" />
+
+        <!-- Home Screen Widgets -->
+        <receiver
+            android:name="com.example.widget.TodayScheduleWidgetProvider"
+            android:exported="true"
+            android:label="Jadwal Hari Ini (MahaSigma)">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_today_schedule_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.example.widget.UpcomingTasksWidgetProvider"
+            android:exported="true"
+            android:label="Deadline Tugas (MahaSigma)">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_upcoming_tasks_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.example.widget.QuickNotesWidgetProvider"
+            android:exported="true"
+            android:label="Akses Catatan (MahaSigma)">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_quick_notes_info" />
+        </receiver>
+
+        <!-- FileProvider for Sharing and Exporting PDF Documents -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.data.dao.MahaSigmaDao
 import com.example.data.entity.CourseEntity
@@ -23,7 +24,7 @@ import kotlinx.coroutines.launch
         TaskEntity::class,
         NoteEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class MahaSigmaDatabase : RoomDatabase() {
@@ -34,6 +35,12 @@ abstract class MahaSigmaDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: MahaSigmaDatabase? = null
 
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE notes ADD COLUMN imagePaths TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         fun getDatabase(context: Context): MahaSigmaDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -41,8 +48,9 @@ abstract class MahaSigmaDatabase : RoomDatabase() {
                     MahaSigmaDatabase::class.java,
                     "mahasigma_database.db"
                 )
-                    .addCallback(DatabaseCallback())
+                    .addMigrations(MIGRATION_1_2)
                     .fallbackToDestructiveMigration()
+                    .addCallback(DatabaseCallback())
                     .build()
                 INSTANCE = instance
                 instance

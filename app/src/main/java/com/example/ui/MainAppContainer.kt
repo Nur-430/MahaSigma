@@ -60,6 +60,7 @@ import com.example.ui.theme.DuskBlue
 import com.example.ui.theme.DustyDenim
 import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.InkBlack
+import com.example.ui.theme.MahaTheme
 import com.example.ui.theme.PrussianBlue
 import com.example.ui.viewmodel.MahaSigmaViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -80,11 +81,20 @@ sealed class NavItem(
 @Composable
 fun MainAppContainer(
     viewModel: MahaSigmaViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    initialTab: Int? = null,
+    initialAction: String? = null
 ) {
     val context = LocalContext.current
-    var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
+    val colors = MahaTheme.colors
+    var selectedTabIndex by rememberSaveable { mutableIntStateOf(initialTab?.takeIf { it in 0..4 } ?: 0) }
     val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(initialTab) {
+        if (initialTab != null && initialTab in 0..4) {
+            selectedTabIndex = initialTab
+        }
+    }
 
     // Request notification permission if Android 13+
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -121,18 +131,18 @@ fun MainAppContainer(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = InkBlack,
+        containerColor = colors.background,
         contentWindowInsets = WindowInsets.navigationBars,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, DuskBlue.copy(alpha = 0.4f), RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                    .border(1.dp, colors.border.copy(alpha = 0.4f), RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
                     .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
             ) {
                 NavigationBar(
-                    containerColor = PrussianBlue,
+                    containerColor = colors.surface,
                     tonalElevation = 8.dp
                 ) {
                     navItems.forEachIndexed { index, item ->
@@ -155,11 +165,11 @@ fun MainAppContainer(
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = ElectricCyan,
-                                selectedTextColor = ElectricCyan,
-                                unselectedIconColor = DustyDenim,
-                                unselectedTextColor = DustyDenim,
-                                indicatorColor = DuskBlue.copy(alpha = 0.6f)
+                                selectedIconColor = colors.accentPrimary,
+                                selectedTextColor = colors.accentPrimary,
+                                unselectedIconColor = colors.textSecondary,
+                                unselectedTextColor = colors.textSecondary,
+                                indicatorColor = colors.surfaceVariant
                             ),
                             modifier = Modifier.testTag(item.testTag)
                         )
@@ -178,7 +188,10 @@ fun MainAppContainer(
                     viewModel = viewModel,
                     onNavigateToSchedule = { selectedTabIndex = 1 },
                     onNavigateToTasks = { selectedTabIndex = 2 },
-                    onAddTaskClick = { selectedTabIndex = 2 }
+                    onNavigateToNotes = { selectedTabIndex = 3 },
+                    onAddTaskClick = { selectedTabIndex = 2 },
+                    onAddNoteClick = { selectedTabIndex = 3 },
+                    onCameraNoteClick = { selectedTabIndex = 3 }
                 )
                 1 -> ScheduleScreen(viewModel = viewModel)
                 2 -> TasksScreen(viewModel = viewModel)

@@ -18,33 +18,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.outlined.CheckCircleOutline
-import androidx.compose.material.icons.outlined.Event
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -57,26 +40,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.data.entity.ScheduleWithDetails
-import com.example.data.entity.TaskWithCourse
-import com.example.ui.components.CourseTag
-import com.example.ui.components.PriorityBadge
-import com.example.ui.components.StatusOverrideBadge
-import com.example.ui.theme.AlabasterGrey
-import com.example.ui.theme.CrimsonRed
-import com.example.ui.theme.DuskBlue
-import com.example.ui.theme.DustyDenim
+import com.example.ui.components.QuickNotesWidgetCard
+import com.example.ui.components.TodayScheduleWidgetCard
+import com.example.ui.components.UpcomingTasksWidgetCard
+import com.example.ui.theme.AppThemeMode
 import com.example.ui.theme.ElectricCyan
-import com.example.ui.theme.InkBlack
+import com.example.ui.theme.MahaTheme
 import com.example.ui.theme.NeonEmerald
-import com.example.ui.theme.PrussianBlue
 import com.example.ui.theme.SunsetAmber
-import com.example.ui.theme.SurfaceDarkVariant
 import com.example.ui.viewmodel.MahaSigmaViewModel
 import com.example.util.DateUtils
 
@@ -85,14 +59,20 @@ fun DashboardScreen(
     viewModel: MahaSigmaViewModel,
     onNavigateToSchedule: () -> Unit,
     onNavigateToTasks: () -> Unit,
+    onNavigateToNotes: () -> Unit,
     onAddTaskClick: () -> Unit,
+    onAddNoteClick: () -> Unit,
+    onCameraNoteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val colors = MahaTheme.colors
+
     val todaySchedules by viewModel.todaySchedules.collectAsStateWithLifecycle()
-    val upcomingTasks by viewModel.upcomingTasks.collectAsStateWithLifecycle()
     val allTasks by viewModel.allTasks.collectAsStateWithLifecycle()
+    val allNotes by viewModel.allNotes.collectAsStateWithLifecycle()
     val courses by viewModel.courses.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
 
     val pendingTasksCount = allTasks.count { !it.task.isCompleted }
     val todayDayName = DateUtils.getDayName(DateUtils.getCurrentDayOfWeek())
@@ -101,7 +81,7 @@ fun DashboardScreen(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(InkBlack)
+            .background(colors.background)
             .testTag("dashboard_screen"),
         contentPadding = PaddingValues(bottom = 96.dp)
     ) {
@@ -110,8 +90,12 @@ fun DashboardScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(PrussianBlue)
-                    .border(1.dp, DuskBlue.copy(alpha = 0.4f), RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
+                    .background(colors.surface)
+                    .border(
+                        1.dp,
+                        colors.border.copy(alpha = 0.4f),
+                        RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+                    )
                     .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
                     .padding(20.dp)
             ) {
@@ -124,7 +108,7 @@ fun DashboardScreen(
                         Column {
                             Text(
                                 text = "MahaSigma // Academic Hub",
-                                color = ElectricCyan,
+                                color = colors.accentPrimary,
                                 fontSize = 12.sp,
                                 fontFamily = FontFamily.Monospace,
                                 fontWeight = FontWeight.Bold
@@ -132,38 +116,67 @@ fun DashboardScreen(
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "Halo, Mahasiswa! 🎓",
-                                color = AlabasterGrey,
+                                color = colors.textPrimary,
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                        // Date badge
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(SurfaceDarkVariant)
-                                .border(1.dp, DuskBlue, RoundedCornerShape(12.dp))
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = todayDayName,
-                                color = AlabasterGrey,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // Quick Theme Mode Toggle Button
+                            IconButton(
+                                onClick = {
+                                    val nextMode = when (themeMode) {
+                                        AppThemeMode.DARK -> AppThemeMode.LIGHT
+                                        AppThemeMode.LIGHT -> AppThemeMode.DARK
+                                        AppThemeMode.SYSTEM -> if (colors.isDark) AppThemeMode.LIGHT else AppThemeMode.DARK
+                                    }
+                                    viewModel.setThemeMode(nextMode)
+                                },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(colors.surfaceVariant)
+                                    .border(1.dp, colors.borderSubtle, CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = if (colors.isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                    contentDescription = "Ganti Tema",
+                                    tint = if (colors.isDark) SunsetAmber else colors.accentPrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // Date Badge
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(colors.surfaceVariant)
+                                    .border(1.dp, colors.borderSubtle, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = todayDayName,
+                                    color = colors.textPrimary,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = todayFormatted,
-                        color = DustyDenim,
-                        fontSize = 13.sp
+                        color = colors.textSecondary,
+                        fontSize = 12.sp
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // 3 Metric Cards Row
+                    // 3 Metric Badges Row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -197,183 +210,41 @@ fun DashboardScreen(
             }
         }
 
-        // Section 1: Jadwal Kuliah Hari Ini
+        // Widget 1: Jadwal Kuliah Hari Ini
         item {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(ElectricCyan)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Jadwal Kuliah Hari Ini",
-                            color = AlabasterGrey,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Text(
-                        text = "Lihat Semua",
-                        color = ElectricCyan,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .clickable { onNavigateToSchedule() }
-                            .padding(4.dp)
-                    )
-                }
-            }
+            TodayScheduleWidgetCard(
+                todaySchedules = todaySchedules,
+                onViewAllClick = onNavigateToSchedule,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+            )
         }
 
-        if (todaySchedules.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    colors = CardDefaults.cardColors(containerColor = PrussianBlue),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Event,
-                            contentDescription = null,
-                            tint = DustyDenim,
-                            modifier = Modifier.size(44.dp)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "Tidak Ada Kuliah Hari Ini",
-                            color = AlabasterGrey,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Nikmati waktu istirahat atau fokus mengerjakan tugas kuliah.",
-                            color = DustyDenim,
-                            fontSize = 13.sp,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                    }
-                }
-            }
-        } else {
-            items(todaySchedules, key = { it.schedule.id }) { item ->
-                DashboardScheduleCard(
-                    scheduleWithDetails = item,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                )
-            }
-        }
-
-        // Section 2: Deadline Terdekat (< 3 Hari)
+        // Widget 2: Deadline Tugas (Diurutkan dari yang paling dekat deadline)
         item {
-            Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(SunsetAmber)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Deadline Terdekat (< 3 Hari)",
-                            color = AlabasterGrey,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Text(
-                        text = "Kelola Tugas",
-                        color = ElectricCyan,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .clickable { onNavigateToTasks() }
-                            .padding(4.dp)
-                    )
-                }
-            }
+            UpcomingTasksWidgetCard(
+                allTasks = allTasks,
+                onToggleTask = { taskWithCourse -> viewModel.toggleTaskCompletion(taskWithCourse.task) },
+                onViewAllClick = onNavigateToTasks,
+                onAddTaskClick = onAddTaskClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+            )
         }
 
-        if (upcomingTasks.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    colors = CardDefaults.cardColors(containerColor = PrussianBlue),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = NeonEmerald,
-                            modifier = Modifier.size(44.dp)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "Semua Deadline Terkendali! ✨",
-                            color = AlabasterGrey,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Tidak ada tugas mendesak dalam 3 hari ke depan.",
-                            color = DustyDenim,
-                            fontSize = 13.sp,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                    }
-                }
-            }
-        } else {
-            items(upcomingTasks, key = { it.task.id }) { item ->
-                DashboardTaskCard(
-                    taskWithCourse = item,
-                    onToggleComplete = { viewModel.toggleTaskCompletion(item.task) },
-                    onOpenLink = { link ->
-                        try {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            // Link invalid fallback
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                )
-            }
+        // Widget 3: Akses Cepat Fitur Catatan (Tulis Cepat, Foto Papan Tulis, Preview)
+        item {
+            QuickNotesWidgetCard(
+                allNotes = allNotes,
+                onNewNoteClick = onAddNoteClick,
+                onCameraNoteClick = onCameraNoteClick,
+                onViewAllClick = onNavigateToNotes,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp)
+            )
         }
     }
 }
@@ -387,11 +258,13 @@ fun MetricBadge(
     icon: ImageVector,
     modifier: Modifier = Modifier
 ) {
+    val colors = MahaTheme.colors
+
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(SurfaceDarkVariant)
-            .border(1.dp, DuskBlue.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+            .background(colors.surfaceVariant)
+            .border(1.dp, colors.borderSubtle, RoundedCornerShape(14.dp))
             .padding(12.dp)
     ) {
         Column {
@@ -402,7 +275,7 @@ fun MetricBadge(
             ) {
                 Text(
                     text = title,
-                    color = DustyDenim,
+                    color = colors.textSecondary,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1
@@ -418,263 +291,18 @@ fun MetricBadge(
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text = value,
-                    color = AlabasterGrey,
-                    fontSize = 22.sp,
+                    color = colors.textPrimary,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = unit,
-                    color = DustyDenim,
+                    color = colors.textSecondary,
                     fontSize = 10.sp,
                     modifier = Modifier.padding(bottom = 2.dp)
                 )
-            }
-        }
-    }
-}
-
-@Composable
-fun DashboardScheduleCard(
-    scheduleWithDetails: ScheduleWithDetails,
-    modifier: Modifier = Modifier
-) {
-    val schedule = scheduleWithDetails.schedule
-    val course = scheduleWithDetails.course
-    val override = scheduleWithDetails.overrides.firstOrNull()
-
-    val parsedColor = try {
-        if (!course?.colorHex.isNullOrBlank()) Color(android.graphics.Color.parseColor(course.colorHex))
-        else ElectricCyan
-    } catch (e: Exception) {
-        ElectricCyan
-    }
-
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = PrussianBlue),
-        shape = RoundedCornerShape(14.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, DuskBlue.copy(alpha = 0.5f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Course color bar
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(52.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(parsedColor)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = course?.name ?: "Mata Kuliah",
-                        color = AlabasterGrey,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-                    if (override != null) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        StatusOverrideBadge(status = override.status)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Schedule,
-                            contentDescription = null,
-                            tint = ElectricCyan,
-                            modifier = Modifier.size(13.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        val timeDisplay = if (override?.status == "CHANGED_TIME" && !override.newStartTime.isNullOrBlank()) {
-                            "${override.newStartTime} - ${override.newEndTime}"
-                        } else {
-                            "${schedule.startTime} - ${schedule.endTime}"
-                        }
-                        Text(
-                            text = timeDisplay,
-                            color = AlabasterGrey,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = null,
-                            tint = SunsetAmber,
-                            modifier = Modifier.size(13.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        val roomDisplay = if (override?.status == "CHANGED_ROOM" && !override.newRoom.isNullOrBlank()) {
-                            override.newRoom
-                        } else if (override?.status == "ONLINE") {
-                            "Zoom / GMeet"
-                        } else {
-                            schedule.room
-                        }
-                        Text(
-                            text = roomDisplay,
-                            color = DustyDenim,
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-
-                if (!course?.lecturer.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.height(3.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = DustyDenim,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = course.lecturer,
-                            color = DustyDenim,
-                            fontSize = 11.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun DashboardTaskCard(
-    taskWithCourse: TaskWithCourse,
-    onToggleComplete: () -> Unit,
-    onOpenLink: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val task = taskWithCourse.task
-    val course = taskWithCourse.course
-    val relativeTime = DateUtils.getRelativeDeadline(task.dueDate, task.isCompleted)
-    val isDueSoon = (task.dueDate - System.currentTimeMillis()) < (24 * 60 * 60 * 1000L)
-
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = PrussianBlue),
-        shape = RoundedCornerShape(14.dp),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            if (isDueSoon && !task.isCompleted) CrimsonRed.copy(alpha = 0.5f) else DuskBlue.copy(alpha = 0.4f)
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Checkbox(
-                checked = task.isCompleted,
-                onCheckedChange = { onToggleComplete() },
-                colors = CheckboxDefaults.colors(
-                    checkedColor = NeonEmerald,
-                    uncheckedColor = DustyDenim,
-                    checkmarkColor = InkBlack
-                ),
-                modifier = Modifier.testTag("task_checkbox_${task.id}")
-            )
-
-            Spacer(modifier = Modifier.width(6.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = task.title,
-                        color = if (task.isCompleted) DustyDenim else AlabasterGrey,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
-                    )
-                    PriorityBadge(priority = task.priority)
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (course != null) {
-                        CourseTag(name = course.name, code = course.code, colorHex = course.colorHex)
-                    } else {
-                        Text(text = "Tugas Umum", color = DustyDenim, fontSize = 11.sp)
-                    }
-
-                    Text(
-                        text = relativeTime,
-                        color = if (isDueSoon && !task.isCompleted) CrimsonRed else SunsetAmber,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-
-                if (!task.submissionLink.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(SurfaceDarkVariant)
-                            .clickable { onOpenLink(task.submissionLink) }
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                            contentDescription = "Buka Link",
-                            tint = ElectricCyan,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Buka Link Pengumpulan",
-                            color = ElectricCyan,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
             }
         }
     }

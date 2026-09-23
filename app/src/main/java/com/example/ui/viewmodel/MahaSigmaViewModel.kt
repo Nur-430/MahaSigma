@@ -1,6 +1,7 @@
 package com.example.ui.viewmodel
 
 import android.app.Application
+import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
@@ -15,6 +16,7 @@ import com.example.data.entity.ScheduleWithDetails
 import com.example.data.entity.TaskEntity
 import com.example.data.entity.TaskWithCourse
 import com.example.data.repository.MahaSigmaRepository
+import com.example.ui.theme.AppThemeMode
 import com.example.util.BackupHelper
 import com.example.util.DateUtils
 import com.example.util.ImageHelper
@@ -23,6 +25,7 @@ import com.example.util.ParsedScheduleItem
 import com.example.util.PdfScheduleParser
 import com.example.util.ReminderHelper
 import com.example.util.TableScheduleParser
+import com.example.widget.WidgetUpdateHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +53,29 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
     init {
         val db = MahaSigmaDatabase.getDatabase(application)
         repository = MahaSigmaRepository(db.mahaSigmaDao())
+        // Initial widget update
+        WidgetUpdateHelper.updateAllWidgets(application)
+    }
+
+    // Theme Mode Settings
+    private val prefs = application.getSharedPreferences("mahasigma_settings", Context.MODE_PRIVATE)
+    private val _themeMode = MutableStateFlow(
+        try {
+            val saved = prefs.getString("pref_theme_mode", AppThemeMode.DARK.name) ?: AppThemeMode.DARK.name
+            AppThemeMode.valueOf(saved)
+        } catch (e: Exception) {
+            AppThemeMode.DARK
+        }
+    )
+    val themeMode: StateFlow<AppThemeMode> = _themeMode.asStateFlow()
+
+    fun setThemeMode(mode: AppThemeMode) {
+        _themeMode.value = mode
+        prefs.edit().putString("pref_theme_mode", mode.name).apply()
+    }
+
+    private fun notifyWidgetsChanged() {
+        WidgetUpdateHelper.updateAllWidgets(context)
     }
 
     // UI Feedback Event
@@ -149,6 +175,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
                 repository.updateCourse(course)
                 _userMessage.emit("Mata kuliah '${course.name}' berhasil diperbarui")
             }
+            notifyWidgetsChanged()
         }
     }
 
@@ -156,6 +183,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             repository.deleteCourse(course)
             _userMessage.emit("Mata kuliah '${course.name}' telah dihapus")
+            notifyWidgetsChanged()
         }
     }
 
@@ -169,6 +197,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
                 repository.updateSchedule(schedule)
                 _userMessage.emit("Jadwal kuliah berhasil diperbarui")
             }
+            notifyWidgetsChanged()
         }
     }
 
@@ -176,6 +205,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             repository.deleteSchedule(schedule)
             _userMessage.emit("Jadwal telah dihapus")
+            notifyWidgetsChanged()
         }
     }
 
@@ -184,6 +214,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             repository.insertOverride(override)
             _userMessage.emit("Status khusus jadwal berhasil disimpan (${override.status})")
+            notifyWidgetsChanged()
         }
     }
 
@@ -191,6 +222,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             repository.deleteOverride(override)
             _userMessage.emit("Override jadwal dibatalkan")
+            notifyWidgetsChanged()
         }
     }
 
@@ -221,6 +253,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
             }
 
             _userMessage.emit("Tugas '${task.title}' berhasil disimpan")
+            notifyWidgetsChanged()
         }
     }
 
@@ -234,6 +267,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
             } else {
                 _userMessage.emit("Tugas ditandai aktif kembali")
             }
+            notifyWidgetsChanged()
         }
     }
 
@@ -242,6 +276,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
             ReminderHelper.cancelTaskReminder(context, task.id)
             repository.deleteTask(task)
             _userMessage.emit("Tugas '${task.title}' telah dihapus")
+            notifyWidgetsChanged()
         }
     }
 
@@ -251,50 +286,87 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
         courseId: Int?,
         title: String,
         content: String,
-        imageUri: Uri?,
-        enhanceImage: Boolean,
-        existingImagePath: String?
+        newImageUris: List<Uri> = emptyList(),
+        enhanceImage: Boolean = true,
+        existingImagePaths: List<String> = emptyList()
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            var finalImagePath = existingImagePath
+            val finalImagePaths = existingImagePaths.toMutableList()
 
-            if (imageUri != null) {
-                val rawBitmap = ImageHelper.loadBitmapFromUri(context, imageUri)
+            for (uri in newImageUris) {
+                if (finalImagePaths.size >= 5) break
+                val rawBitmap = ImageHelper.loadBitmapFromUri(context, uri)
                 if (rawBitmap != null) {
                     val processedBitmap = if (enhanceImage) {
                         ImageHelper.enhanceBoardImage(rawBitmap)
                     } else {
                         rawBitmap
                     }
-                    finalImagePath = ImageHelper.saveBitmapToInternalStorage(context, processedBitmap)
+                    val path = ImageHelper.saveBitmapToInternalStorage(context, processedBitmap)
+                    finalImagePaths.add(path)
                 }
             }
+
+            val limitedPaths = finalImagePaths.distinct().take(5)
+            val pathsString = limitedPaths.joinToString("\n")
+            val firstPath = limitedPaths.firstOrNull()
+
+            val existingNote = if (id != 0) repository.getNoteById(id) else null
+            val createdAt = existingNote?.createdAt ?: System.currentTimeMillis()
 
             val note = NoteEntity(
                 id = id,
                 courseId = courseId,
                 title = title,
                 content = content,
-                localImagePath = finalImagePath,
-                createdAt = if (id == 0) System.currentTimeMillis() else System.currentTimeMillis(),
+                localImagePath = firstPath,
+                imagePaths = pathsString,
+                createdAt = createdAt,
                 updatedAt = System.currentTimeMillis()
             )
 
             if (id == 0) {
                 repository.insertNote(note)
-                _userMessage.emit("Catatan baru berhasil disimpan")
+                _userMessage.emit("Catatan baru berhasil disimpan (${limitedPaths.size} foto)")
             } else {
                 repository.updateNote(note)
-                _userMessage.emit("Catatan berhasil diperbarui")
+                _userMessage.emit("Catatan berhasil diperbarui (${limitedPaths.size} foto)")
             }
+            notifyWidgetsChanged()
         }
+    }
+
+    // Overload for single-image backwards compatibility
+    fun saveNote(
+        id: Int,
+        courseId: Int?,
+        title: String,
+        content: String,
+        imageUri: Uri?,
+        enhanceImage: Boolean,
+        existingImagePath: String?
+    ) {
+        val newUris = if (imageUri != null) listOf(imageUri) else emptyList()
+        val existingList = if (!existingImagePath.isNullOrBlank()) listOf(existingImagePath) else emptyList()
+        saveNote(
+            id = id,
+            courseId = courseId,
+            title = title,
+            content = content,
+            newImageUris = newUris,
+            enhanceImage = enhanceImage,
+            existingImagePaths = existingList
+        )
     }
 
     fun deleteNote(note: NoteEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            ImageHelper.deleteFile(note.localImagePath)
+            note.getAllImages().forEach { path ->
+                ImageHelper.deleteFile(path)
+            }
             repository.deleteNote(note)
             _userMessage.emit("Catatan '${note.title}' telah dihapus")
+            notifyWidgetsChanged()
         }
     }
 
@@ -337,6 +409,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
                     notes = backup.notes
                 )
                 withContext(Dispatchers.Main) {
+                    notifyWidgetsChanged()
                     onResult(
                         true,
                         "Berhasil memulihkan ${backup.courses.size} mata kuliah, ${backup.schedules.size} jadwal, ${backup.tasks.size} tugas, dan ${backup.notes.size} catatan!"
@@ -354,6 +427,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch(Dispatchers.IO) {
             repository.clearAllData()
             withContext(Dispatchers.Main) {
+                notifyWidgetsChanged()
                 _userMessage.emit("Seluruh data berhasil direset")
                 onComplete()
             }
@@ -417,6 +491,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
             }
 
             withContext(Dispatchers.Main) {
+                notifyWidgetsChanged()
                 _userMessage.emit("Berhasil mengimpor $importedCount jadwal kuliah!")
                 onComplete(importedCount)
             }

@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">MahaSigma</string>
+    <string name="widget_schedule_description">Menampilkan ringkasan jadwal kuliah aktif hari ini.</string>
+    <string name="widget_tasks_description">Menampilkan daftar deadline tugas kuliah terdekat.</string>
+    <string name="widget_notes_description">Akses cepat catatan materi dan foto papan tulis.</string>
 </resources>
