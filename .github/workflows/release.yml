@@ -1,4 +1,16 @@
-steps:
+name: Build and Release MahaSigma APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build APK & Create Release
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -9,7 +21,6 @@ steps:
           distribution: 'temurin'
           cache: gradle
 
-      # Server akan otomatis membuat file debug.keystore di direktori root sebelum build
       - name: Generate Debug Keystore
         run: keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "C=US, O=Android, CN=Android Debug"
 
