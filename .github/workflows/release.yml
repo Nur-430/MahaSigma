@@ -21,15 +21,9 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # KUNCI UTAMANYA DI SINI: Server GitHub akan meng-generate gradlew secara otomatis!
-      - name: Generate Gradle Wrapper
-        run: gradle wrapper
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
+      # KITA LANGSUNG MEMANGGIL 'gradle', BUKAN './gradlew'
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: gradle assembleDebug
 
       - name: Upload APK to GitHub Releases
         uses: softprops/action-gh-release@v2
