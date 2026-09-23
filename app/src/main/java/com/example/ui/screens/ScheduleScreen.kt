@@ -492,14 +492,15 @@ fun ScheduleDetailCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    if (!course?.code.isNullOrBlank()) {
-                        Text(
-                            text = "Kode: ${course.code}",
-                            color = DustyDenim,
-                            fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace
-                        )
-                    }
+                    val isPraktik = course?.code.equals("Praktik", ignoreCase = true) ||
+                                    (course?.name?.contains("Praktik", ignoreCase = true) == true)
+                    val jenisKuliah = if (isPraktik) "Praktik" else "Teori"
+                    Text(
+                        text = "Jenis: $jenisKuliah",
+                        color = DustyDenim,
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace
+                    )
                 }
 
                 Box {

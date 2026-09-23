@@ -374,15 +374,20 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
             var importedCount = 0
 
             for (item in selected) {
+                val isPraktik = item.room.equals("Praktik", ignoreCase = true) ||
+                                item.courseCode.equals("Praktik", ignoreCase = true) ||
+                                item.courseName.contains("Praktik", ignoreCase = true)
+                val courseType = if (isPraktik) "Praktik" else "Teori"
+
                 var course = existingCourses.find {
-                    (item.courseCode.isNotBlank() && it.code.equals(item.courseCode, ignoreCase = true)) ||
-                    it.name.equals(item.courseName, ignoreCase = true)
+                    it.name.equals(item.courseName.trim(), ignoreCase = true) ||
+                    (item.courseCode.isNotBlank() && !item.courseCode.equals("Teori", ignoreCase = true) && !item.courseCode.equals("Praktik", ignoreCase = true) && it.code.equals(item.courseCode, ignoreCase = true))
                 }
 
                 val courseId = if (course != null) {
                     val updatedCourse = course.copy(
                         name = item.courseName.trim(),
-                        code = item.courseCode.trim().ifBlank { course.code },
+                        code = courseType,
                         lecturer = item.lecturer.trim().ifBlank { course.lecturer }
                     )
                     repository.updateCourse(updatedCourse)
@@ -390,7 +395,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
                 } else {
                     val newCourse = CourseEntity(
                         name = item.courseName.trim(),
-                        code = item.courseCode.trim(),
+                        code = courseType,
                         lecturer = item.lecturer.trim(),
                         colorHex = item.colorHex
                     )
@@ -405,7 +410,7 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
                     dayOfWeek = item.dayOfWeek,
                     startTime = item.startTime,
                     endTime = item.endTime,
-                    room = item.room.trim()
+                    room = courseType
                 )
                 repository.insertSchedule(schedule)
                 importedCount++

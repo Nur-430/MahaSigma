@@ -56,6 +56,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -726,6 +727,12 @@ fun CourseItemRow(
         ElectricCyan
     }
 
+    val isPraktik = course.code.equals("Praktik", ignoreCase = true) ||
+                    course.name.contains("Praktik", ignoreCase = true)
+    val badgeLabel = if (isPraktik) "Praktik" else "Teori"
+    val badgeColor = if (isPraktik) Color(0xFFF59E0B) else ElectricCyan
+    val badgeBg = if (isPraktik) Color(0xFF78350F).copy(alpha = 0.35f) else ElectricCyan.copy(alpha = 0.15f)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -745,14 +752,22 @@ fun CourseItemRow(
 
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = course.code,
-                    color = ElectricCyan,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace
-                )
-                Spacer(modifier = Modifier.width(6.dp))
+                // Badge Keterangan Teori / Praktik (menggantikan kode matkul sesuai instruksi)
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = badgeBg,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, badgeColor.copy(alpha = 0.5f))
+                ) {
+                    Text(
+                        text = badgeLabel,
+                        color = badgeColor,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = course.name,
                     color = AlabasterGrey,

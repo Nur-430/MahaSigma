@@ -167,26 +167,17 @@ object PdfScheduleParser {
 
     /**
      * Ekstraksi teks dari berkas PDF.
-     * Menggunakan rekonstruksi tabel koordinat 2D presisi per kata.
+     * Menggunakan PDFTextStripper standar untuk mengekstrak urutan teks linier dokumen KRS.
      */
     fun extractTextFromPdf(context: Context, uri: Uri): Result<String> {
         return try {
             PDFBoxResourceLoader.init(context.applicationContext)
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 val document = PDDocument.load(inputStream)
-                val stripper = CoordinatePdfTextStripper()
-                val rawText = stripper.getText(document) // Membaca sekaligus mengumpulkan kata-kata koordinat
-
-                // Rekonstruksi struktur tabel menggunakan koordinat kata 2D
-                val reconstructedTable = reconstructTableFromWords(stripper.words)
-
+                val stripper = PDFTextStripper()
+                val rawText = stripper.getText(document)
                 document.close()
-
-                if (reconstructedTable.isNotBlank()) {
-                    Result.success(reconstructedTable)
-                } else {
-                    Result.success(rawText)
-                }
+                Result.success(rawText)
             } ?: Result.failure(Exception("Tidak dapat membuka file PDF"))
         } catch (e: Exception) {
             Result.failure(e)
@@ -462,6 +453,14 @@ object PdfScheduleParser {
                 endTime = et
             }
 
+            val courseType = if (keterangan.isNotBlank()) {
+                if (keterangan.contains("Praktik", ignoreCase = true)) "Praktik" else "Teori"
+            } else if (courseName.contains("PRAKTIK", ignoreCase = true)) {
+                "Praktik"
+            } else {
+                "Teori"
+            }
+
             results.add(
                 ParsedScheduleItem(
                     courseName = courseName.ifBlank { "Mata Kuliah $courseCode" },
@@ -470,7 +469,7 @@ object PdfScheduleParser {
                     dayOfWeek = dayOfWeek,
                     startTime = startTime,
                     endTime = endTime,
-                    room = keterangan.ifBlank { "Teori" }, // Keterangan (Teori/Praktik)
+                    room = courseType,
                     colorHex = colorPalette[colorIdx % colorPalette.size]
                 )
             )
@@ -549,16 +548,28 @@ object PdfScheduleParser {
             if (line.equals("Praktik", ignoreCase = true)) keterangan = "Praktik"
             else if (line.equals("Teori", ignoreCase = true)) keterangan = "Teori"
 
-            val timeMatch = TIME_RANGE_REGEX.find(line)
-            if (timeMatch != null) {
-                val (st, et) = parseTimes(timeMatch)
-                foundStartTime = st
-                foundEndTime = et
-            }
-
             val dayMatch = DAY_REGEX.find(line)
-            if (dayMatch != null) {
+            if (dayMatch != null && foundDay == null) {
                 foundDay = parseDay(dayMatch.value)
+            }
+        }
+
+        // Ekstraksi Waktu: gabungkan seluruh baris blok agar rentang waktu multi-baris ("11:00:00\n-\n12:39:00") terbaca dengan akurat
+        val joinedBlock = blockLines.joinToString(" ")
+        val timeRangeMatch = TIME_RANGE_REGEX.find(joinedBlock)
+        if (timeRangeMatch != null) {
+            val (st, et) = parseTimes(timeRangeMatch)
+            foundStartTime = st
+            foundEndTime = et
+        } else {
+            val timeMatches = Regex("""\b(\d{1,2})[:.](\d{2})(?:[:.]\d{2})?\b""").findAll(joinedBlock).toList()
+            if (timeMatches.size >= 2) {
+                val h1 = timeMatches[0].groupValues[1].padStart(2, '0')
+                val m1 = timeMatches[0].groupValues[2].padStart(2, '0')
+                val h2 = timeMatches[1].groupValues[1].padStart(2, '0')
+                val m2 = timeMatches[1].groupValues[2].padStart(2, '0')
+                foundStartTime = "$h1:$m1"
+                foundEndTime = "$h2:$m2"
             }
         }
 
@@ -600,6 +611,10 @@ object PdfScheduleParser {
             .replace(Regex("""\b[1-6]\s+[A-Z][A-Z0-9]{0,2}\b"""), "")
             .replace(Regex("""\b\d+\s*SKS\b""", RegexOption.IGNORE_CASE), "")
             .trim()
+
+        if (keterangan == "Teori" && fullCourseName.contains("PRAKTIK", ignoreCase = true)) {
+            keterangan = "Praktik"
+        }
 
         // Lecturer adalah baris setelah SKS/Rombel sampai sebelum Teori/Praktik atau Ruang
         var lecturer = ""
