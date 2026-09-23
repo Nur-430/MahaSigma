@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "226282556915",
+    "project_id": "mahasigma-9f3b7",
+    "storage_bucket": "mahasigma-9f3b7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:226282556915:android:331836b560bfea3e959686",
+        "android_client_info": {
+          "package_name": "com.nurokhim.mahasigma"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-lz9YAWYUJlCjdDgNtVhgRtwhyxA6_d4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
