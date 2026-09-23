@@ -1,4 +1,5 @@
 package com.example.widget
+import com.nurokhim.mahasigma.R
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
