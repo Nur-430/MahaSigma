@@ -56,6 +56,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -90,7 +91,9 @@ import java.util.Calendar
 @Composable
 fun TasksScreen(
     viewModel: MahaSigmaViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    initialOpenAddDialog: Boolean = false,
+    onQuickActionConsumed: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val colors = MahaTheme.colors
@@ -102,6 +105,14 @@ fun TasksScreen(
     var showAddEditDialog by remember { mutableStateOf(false) }
     var taskToEdit by remember { mutableStateOf<TaskEntity?>(null) }
     var taskToDelete by remember { mutableStateOf<TaskEntity?>(null) }
+
+    LaunchedEffect(initialOpenAddDialog) {
+        if (initialOpenAddDialog) {
+            taskToEdit = null
+            showAddEditDialog = true
+            onQuickActionConsumed()
+        }
+    }
 
     val activeCount = allTasks.count { !it.task.isCompleted }
     val completedCount = allTasks.count { it.task.isCompleted }
@@ -116,7 +127,7 @@ fun TasksScreen(
                     showAddEditDialog = true
                 },
                 containerColor = colors.accentPrimary,
-                contentColor = InkBlack,
+                contentColor = if (colors.isDark) InkBlack else Color.White,
                 modifier = Modifier
                     .padding(bottom = 80.dp)
                     .testTag("add_task_fab")
@@ -896,9 +907,12 @@ fun AddEditTaskDialog(
                         )
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.accentPrimary,
+                    contentColor = if (colors.isDark) InkBlack else Color.White
+                )
             ) {
-                Text("Simpan Tugas", color = InkBlack, fontWeight = FontWeight.Bold)
+                Text("Simpan Tugas", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

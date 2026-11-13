@@ -75,6 +75,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -93,6 +94,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -117,7 +119,9 @@ import java.io.File
 @Composable
 fun NotesScreen(
     viewModel: MahaSigmaViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    initialQuickAction: String? = null,
+    onQuickActionConsumed: () -> Unit = {}
 ) {
     val colors = MahaTheme.colors
     val context = LocalContext.current
@@ -128,12 +132,27 @@ fun NotesScreen(
     val selectedCourseFilter by viewModel.selectedNoteCourseFilter.collectAsStateWithLifecycle()
 
     var showAddEditDialog by remember { mutableStateOf(false) }
+    var autoTriggerCameraInDialog by remember { mutableStateOf(false) }
     var noteToEdit by remember { mutableStateOf<NoteEntity?>(null) }
     var noteToDelete by remember { mutableStateOf<NoteEntity?>(null) }
     var noteToViewDetail by remember { mutableStateOf<NoteWithCourse?>(null) }
     var noteToExportPdf by remember { mutableStateOf<NoteWithCourse?>(null) }
     var fullScreenImageUrl by remember { mutableStateOf<String?>(null) }
     var filterDropdownExpanded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(initialQuickAction) {
+        if (initialQuickAction == "NEW_NOTE") {
+            noteToEdit = null
+            autoTriggerCameraInDialog = false
+            showAddEditDialog = true
+            onQuickActionConsumed()
+        } else if (initialQuickAction == "CAMERA_NOTE") {
+            noteToEdit = null
+            autoTriggerCameraInDialog = true
+            showAddEditDialog = true
+            onQuickActionConsumed()
+        }
+    }
 
     val activeSelectedCourse = courses.firstOrNull { it.id == selectedCourseFilter }
 
@@ -169,10 +188,11 @@ fun NotesScreen(
             FloatingActionButton(
                 onClick = {
                     noteToEdit = null
+                    autoTriggerCameraInDialog = false
                     showAddEditDialog = true
                 },
                 containerColor = colors.accentPrimary,
-                contentColor = InkBlack,
+                contentColor = if (colors.isDark) InkBlack else Color.White,
                 modifier = Modifier
                     .padding(bottom = 80.dp)
                     .testTag("add_note_fab")
@@ -473,7 +493,11 @@ fun NotesScreen(
         AddEditNoteDialog(
             note = noteToEdit,
             courses = courses,
-            onDismiss = { showAddEditDialog = false },
+            autoTriggerCamera = autoTriggerCameraInDialog,
+            onDismiss = {
+                showAddEditDialog = false
+                autoTriggerCameraInDialog = false
+            },
             onSave = { id, courseId, title, content, newUris, enhance, existingPaths ->
                 viewModel.saveNote(
                     id = id,
@@ -485,6 +509,7 @@ fun NotesScreen(
                     existingImagePaths = existingPaths
                 )
                 showAddEditDialog = false
+                autoTriggerCameraInDialog = false
             }
         )
     }
@@ -769,24 +794,28 @@ fun NoteDetailDialog(
                         Icon(Icons.Default.Close, contentDescription = "Tutup", tint = colors.textPrimary)
                     }
 
+                    val onPrimaryColor = if (colors.isDark) InkBlack else Color.White
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
                             onClick = onExportPdf,
-                            colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colors.accentPrimary,
+                                contentColor = onPrimaryColor
+                            ),
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.PictureAsPdf,
                                 contentDescription = null,
-                                tint = InkBlack,
+                                tint = onPrimaryColor,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Ekspor PDF", color = InkBlack, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("Ekspor PDF", color = onPrimaryColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
 
                         IconButton(onClick = onEdit) {
@@ -1015,10 +1044,12 @@ fun NoteDetailDialog(
 fun AddEditNoteDialog(
     note: NoteEntity?,
     courses: List<CourseEntity>,
+    autoTriggerCamera: Boolean = false,
     onDismiss: () -> Unit,
     onSave: (Int, Int?, String, String, List<Uri>, Boolean, List<String>) -> Unit
 ) {
     val colors = MahaTheme.colors
+    val onPrimaryColor = if (colors.isDark) InkBlack else Color.White
     val context = LocalContext.current
 
     var title by remember { mutableStateOf(note?.title ?: "") }
@@ -1031,6 +1062,7 @@ fun AddEditNoteDialog(
 
     // List of newly chosen image Uris (from gallery/camera)
     var newPhotoUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
 
     var courseDropdownExpanded by remember { mutableStateOf(false) }
 
@@ -1044,6 +1076,40 @@ fun AddEditNoteDialog(
         if (uris.isNotEmpty()) {
             val toAdd = uris.take(remainingSlots)
             newPhotoUris = (newPhotoUris + toAdd).take(5 - existingPhotos.size)
+        }
+    }
+
+    // Direct camera photo capture launcher
+    val cameraCaptureLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success: Boolean ->
+        val capturedUri = pendingCameraUri
+        if (success && capturedUri != null && totalPhotosCount < 5) {
+            newPhotoUris = (newPhotoUris + capturedUri).take(5 - existingPhotos.size)
+        }
+    }
+
+    fun launchCameraCapture() {
+        if (totalPhotosCount >= 5) return
+        try {
+            val dir = File(context.cacheDir, "exported_notes")
+            if (!dir.exists()) dir.mkdirs()
+            val photoFile = File(dir, "capture_${System.currentTimeMillis()}.jpg")
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                photoFile
+            )
+            pendingCameraUri = uri
+            cameraCaptureLauncher.launch(uri)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Tidak dapat membuka kamera: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    LaunchedEffect(autoTriggerCamera) {
+        if (autoTriggerCamera && totalPhotosCount < 5) {
+            launchCameraCapture()
         }
     }
 
@@ -1176,18 +1242,30 @@ fun AddEditNoteDialog(
                             }
 
                             if (totalPhotosCount < 5) {
-                                OutlinedButton(
-                                    onClick = {
-                                        multiPhotoPickerLauncher.launch(
-                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                        )
-                                    },
-                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.accentPrimary),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-                                ) {
-                                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Tambah Foto", fontSize = 11.sp)
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    OutlinedButton(
+                                        onClick = { launchCameraCapture() },
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonEmerald),
+                                        border = BorderStroke(1.dp, NeonEmerald.copy(alpha = 0.5f)),
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(15.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Kamera", fontSize = 11.sp)
+                                    }
+                                    OutlinedButton(
+                                        onClick = {
+                                            multiPhotoPickerLauncher.launch(
+                                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                            )
+                                        },
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.accentPrimary),
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, modifier = Modifier.size(15.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Galeri", fontSize = 11.sp)
+                                    }
                                 }
                             }
                         }
@@ -1306,7 +1384,7 @@ fun AddEditNoteDialog(
                             Checkbox(
                                 checked = enhanceImage,
                                 onCheckedChange = { enhanceImage = it },
-                                colors = CheckboxDefaults.colors(checkedColor = colors.accentPrimary, checkmarkColor = InkBlack)
+                                colors = CheckboxDefaults.colors(checkedColor = colors.accentPrimary, checkmarkColor = onPrimaryColor)
                             )
                             Column {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1345,9 +1423,12 @@ fun AddEditNoteDialog(
                         )
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.accentPrimary,
+                    contentColor = onPrimaryColor
+                )
             ) {
-                Text("Simpan Catatan", color = InkBlack, fontWeight = FontWeight.Bold)
+                Text("Simpan Catatan", color = onPrimaryColor, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -1525,17 +1606,21 @@ fun ExportPdfDialog(
                     }
 
                     // Option 3: Save to Device
+                    val onPrimaryColor = if (colors.isDark) InkBlack else Color.White
                     Button(
                         onClick = {
                             onSaveToDevice()
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.accentPrimary,
+                            contentColor = onPrimaryColor
+                        ),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        Icon(Icons.Default.Download, contentDescription = null, tint = InkBlack, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Download, contentDescription = null, tint = onPrimaryColor, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Simpan ke Memori HP", color = InkBlack, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("Simpan ke Memori HP", color = onPrimaryColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

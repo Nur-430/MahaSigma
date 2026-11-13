@@ -255,11 +255,15 @@ fun BackgroundPdfImportDialog(
                                     lineHeight = 18.sp
                                 )
                                 Spacer(modifier = Modifier.height(24.dp))
+                                val onPrimaryColor = if (colors.isDark) InkBlack else Color.White
                                 Button(
                                     onClick = { viewModel.dismissImportDialog() },
-                                    colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = colors.accentPrimary,
+                                        contentColor = onPrimaryColor
+                                    )
                                 ) {
-                                    Text("Tutup", color = InkBlack, fontWeight = FontWeight.Bold)
+                                    Text("Tutup", color = onPrimaryColor, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }

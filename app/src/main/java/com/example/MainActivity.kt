@@ -42,7 +42,10 @@ class MainActivity : ComponentActivity() {
                 MainAppContainer(
                     viewModel = viewModel,
                     initialTab = if (currentTab in 0..4) currentTab else null,
-                    initialAction = currentAction
+                    initialAction = currentAction,
+                    onActionConsumed = {
+                        currentAction = null
+                    }
                 )
             }
         }
@@ -59,8 +62,13 @@ class MainActivity : ComponentActivity() {
         val tab = intent.getIntExtra("EXTRA_TAB", -1)
         if (tab in 0..4) {
             currentTab = tab
+            intent.removeExtra("EXTRA_TAB")
         }
-        currentAction = intent.getStringExtra("EXTRA_ACTION")
+        val action = intent.getStringExtra("EXTRA_ACTION")
+        if (action != null) {
+            currentAction = action
+            intent.removeExtra("EXTRA_ACTION")
+        }
     }
 }
 

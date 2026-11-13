@@ -3,6 +3,7 @@ package com.example.ui
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -38,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -83,16 +85,27 @@ fun MainAppContainer(
     viewModel: MahaSigmaViewModel,
     modifier: Modifier = Modifier,
     initialTab: Int? = null,
-    initialAction: String? = null
+    initialAction: String? = null,
+    onActionConsumed: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val colors = MahaTheme.colors
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(initialTab?.takeIf { it in 0..4 } ?: 0) }
+    var pendingQuickAction by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(initialTab) {
+    // Return to Dashboard on back press when on a secondary tab
+    BackHandler(enabled = selectedTabIndex != 0) {
+        selectedTabIndex = 0
+    }
+
+    LaunchedEffect(initialTab, initialAction) {
         if (initialTab != null && initialTab in 0..4) {
             selectedTabIndex = initialTab
+        }
+        if (initialAction != null) {
+            pendingQuickAction = initialAction
+            onActionConsumed()
         }
     }
 
@@ -189,15 +202,39 @@ fun MainAppContainer(
                     onNavigateToSchedule = { selectedTabIndex = 1 },
                     onNavigateToTasks = { selectedTabIndex = 2 },
                     onNavigateToNotes = { selectedTabIndex = 3 },
-                    onAddTaskClick = { selectedTabIndex = 2 },
-                    onAddNoteClick = { selectedTabIndex = 3 },
-                    onCameraNoteClick = { selectedTabIndex = 3 }
+                    onAddTaskClick = {
+                        pendingQuickAction = "NEW_TASK"
+                        selectedTabIndex = 2
+                    },
+                    onAddNoteClick = {
+                        pendingQuickAction = "NEW_NOTE"
+                        selectedTabIndex = 3
+                    },
+                    onCameraNoteClick = {
+                        pendingQuickAction = "CAMERA_NOTE"
+                        selectedTabIndex = 3
+                    }
                 )
                 1 -> ScheduleScreen(viewModel = viewModel)
-                2 -> TasksScreen(viewModel = viewModel)
-                3 -> NotesScreen(viewModel = viewModel)
+                2 -> TasksScreen(
+                    viewModel = viewModel,
+                    initialOpenAddDialog = pendingQuickAction == "NEW_TASK",
+                    onQuickActionConsumed = {
+                        if (pendingQuickAction == "NEW_TASK") pendingQuickAction = null
+                    }
+                )
+                3 -> NotesScreen(
+                    viewModel = viewModel,
+                    initialQuickAction = if (pendingQuickAction == "NEW_NOTE" || pendingQuickAction == "CAMERA_NOTE") pendingQuickAction else null,
+                    onQuickActionConsumed = {
+                        if (pendingQuickAction == "NEW_NOTE" || pendingQuickAction == "CAMERA_NOTE") {
+                            pendingQuickAction = null
+                        }
+                    }
+                )
                 4 -> SettingsScreen(viewModel = viewModel)
             }
         }
     }
 }
+

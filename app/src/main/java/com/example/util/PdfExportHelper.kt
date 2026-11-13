@@ -423,39 +423,57 @@ object PdfExportHelper {
      * Membagikan file PDF menggunakan Android ShareSheet (WhatsApp, Telegram, Google Drive, Email, dll.)
      */
     fun sharePdf(context: Context, pdfFile: File) {
-        val uri: Uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            pdfFile
-        )
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/pdf"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, pdfFile.nameWithoutExtension)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        try {
+            val uri: Uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                pdfFile
+            )
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/pdf"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, pdfFile.nameWithoutExtension)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            val chooser = Intent.createChooser(shareIntent, "Bagikan Catatan PDF via")
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(chooser)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            android.widget.Toast.makeText(
+                context,
+                "Tidak dapat membagikan PDF: ${e.localizedMessage}",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
         }
-        val chooser = Intent.createChooser(shareIntent, "Bagikan Catatan PDF via")
-        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(chooser)
     }
 
     /**
      * Membuka file PDF langsung di viewer PDF yang terpasang di HP (e.g. Google PDF Viewer, WPS, Drive)
      */
     fun openPdf(context: Context, pdfFile: File) {
-        val uri: Uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            pdfFile
-        )
-        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/pdf")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            val uri: Uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                pdfFile
+            )
+            val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/pdf")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            val chooser = Intent.createChooser(viewIntent, "Buka Dokumen PDF dengan")
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(chooser)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            android.widget.Toast.makeText(
+                context,
+                "Tidak ditemukan aplikasi pembaca PDF di perangkat ini.",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
         }
-        val chooser = Intent.createChooser(viewIntent, "Buka Dokumen PDF dengan")
-        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(chooser)
     }
 
     private fun decodeSampledBitmap(filePath: String, reqWidth: Int, reqHeight: Int): Bitmap? {

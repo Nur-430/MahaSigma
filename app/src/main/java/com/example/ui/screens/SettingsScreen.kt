@@ -256,6 +256,7 @@ fun SettingsScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    val onPrimaryColor = if (colors.isDark) InkBlack else Color.White
                     Button(
                         onClick = {
                             pdfPickerLauncher.launch(
@@ -269,13 +270,16 @@ fun SettingsScreen(
                                 )
                             )
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.accentPrimary,
+                            contentColor = onPrimaryColor
+                        ),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = InkBlack, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = onPrimaryColor, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Pilih Berkas PDF / Excel", color = InkBlack, fontWeight = FontWeight.Bold)
+                        Text("Pilih Berkas PDF / Excel", color = onPrimaryColor, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -504,6 +508,7 @@ fun SettingsScreen(
                     }
 
                     // Share button
+                    val onPrimaryColor = if (colors.isDark) InkBlack else Color.White
                     Button(
                         onClick = {
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -513,11 +518,14 @@ fun SettingsScreen(
                             }
                             context.startActivity(Intent.createChooser(shareIntent, "Bagikan Cadangan MahaSigma"))
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.accentPrimary,
+                            contentColor = onPrimaryColor
+                        )
                     ) {
-                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp), tint = InkBlack)
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp), tint = onPrimaryColor)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Bagikan", fontSize = 12.sp, color = InkBlack, fontWeight = FontWeight.Bold)
+                        Text("Bagikan", fontSize = 12.sp, color = onPrimaryColor, fontWeight = FontWeight.Bold)
                     }
                 }
             },
@@ -844,6 +852,7 @@ fun AddEditCourseDialog(
             }
         },
         confirmButton = {
+            val onPrimaryColor = if (colors.isDark) InkBlack else Color.White
             Button(
                 onClick = {
                     if (name.isNotBlank()) {
@@ -858,9 +867,12 @@ fun AddEditCourseDialog(
                         )
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.accentPrimary,
+                    contentColor = onPrimaryColor
+                )
             ) {
-                Text("Simpan", color = InkBlack, fontWeight = FontWeight.Bold)
+                Text("Simpan", color = onPrimaryColor, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

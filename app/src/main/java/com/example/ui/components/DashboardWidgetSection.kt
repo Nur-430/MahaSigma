@@ -625,7 +625,10 @@ fun QuickNotesWidgetCard(
                 Button(
                     onClick = onNewNoteClick,
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.accentPrimary),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.accentPrimary,
+                        contentColor = if (colors.isDark) com.example.ui.theme.InkBlack else Color.White
+                    ),
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))

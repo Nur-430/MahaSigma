@@ -314,6 +314,13 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
             val existingNote = if (id != 0) repository.getNoteById(id) else null
             val createdAt = existingNote?.createdAt ?: System.currentTimeMillis()
 
+            // Cleanup any previously saved photos that were removed by the user during edit
+            existingNote?.getAllImages()?.forEach { oldPath ->
+                if (!limitedPaths.contains(oldPath)) {
+                    ImageHelper.deleteFile(oldPath)
+                }
+            }
+
             val note = NoteEntity(
                 id = id,
                 courseId = courseId,
@@ -425,6 +432,18 @@ class MahaSigmaViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun resetAllData(onComplete: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // Cancel any scheduled task reminders
+                repository.getAllTasksSnapshot().forEach { task ->
+                    ReminderHelper.cancelTaskReminder(context, task.id)
+                }
+                // Delete saved note images from internal storage
+                repository.getAllNotesSnapshot().forEach { note ->
+                    note.getAllImages().forEach { path ->
+                        ImageHelper.deleteFile(path)
+                    }
+                }
+            } catch (_: Exception) {}
             repository.clearAllData()
             withContext(Dispatchers.Main) {
                 notifyWidgetsChanged()

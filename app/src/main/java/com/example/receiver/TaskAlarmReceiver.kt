@@ -41,9 +41,10 @@ class TaskAlarmReceiver : BroadcastReceiver() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        // Tap action -> Open MainActivity
+        // Tap action -> Open MainActivity on Tasks tab
         val openIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("EXTRA_TAB", 2)
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
